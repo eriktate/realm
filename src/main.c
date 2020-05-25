@@ -8,20 +8,6 @@
 const int WIDTH = 640;
 const int HEIGHT = 480;
 
-const char *vert_source = \
-	"#version 330 core\n" \
-	"layout (location = 0) in vec3 a_pos;\n" \
-	"void main() {\n" \
-	"gl_Position = vec4(a_pos.x, a_pos.y, a_pos.z, 1.0);\n" \
-	"}";
-
-const char *frag_source = \
-	"#version 330 core\n" \
-	"out vec4 frag_color;\n" \
-	"void main() {\n" \
-	"frag_color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n" \
-	"}";
-
 void process_input(GLFWwindow *w) {
 	if (glfwGetKey(w, GLFW_KEY_ESCAPE)) {
 		glfwSetWindowShouldClose(w, true);
@@ -31,8 +17,6 @@ void process_input(GLFWwindow *w) {
 int main(void)
 {
 
-	char *shader = read_file("vert_shader.glsl");
-	return 0;
 	GLFWwindow* window;
 
 	if (!glfwInit()) {
@@ -86,6 +70,9 @@ int main(void)
 	glBindVertexArray(0);
 
 	// load shaders
+	const char *vert_source = read_file("vert_shader.glsl");
+	const char *frag_source = read_file("frag_shader.glsl");
+
 	unsigned int vert_shader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vert_shader, 1, &vert_source, NULL);
 	glCompileShader(vert_shader);

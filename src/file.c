@@ -1,12 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 char *read_file(const char *fname) {
-	char buf[512];
 	FILE *fd = fopen(fname, "r");
+	if (fd == NULL) {
+		return NULL;
+	}
 
-	fgets(buf, 512, fd);
-	printf("%s", buf);
+	// find file size
+	fseek(fd, 0L, SEEK_END);
+	size_t fsize = ftell(fd);
+	rewind(fd);
 
-	return (char *)malloc(512);
+	char *buf = (char *)malloc(fsize);
+
+	fread(buf, 1, fsize, fd);
+
+	return buf;
 }
