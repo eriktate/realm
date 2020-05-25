@@ -19,9 +19,21 @@ typedef struct vec4 {
 	float w;
 } vec4;
 
-vec2 new_vec2(float, float);
-vec3 new_vec3(float, float, float);
-vec4 new_vec4(float, float, float, float);
+typedef struct quad {
+	vec3 tl;
+	vec3 tr;
+	vec3 bl;
+	vec3 br;
+} quad;
+
+vec2 vec2_new(float, float);
+vec3 vec3_new(float, float, float);
+vec4 vec4_new(float, float, float, float);
+quad quad_new(vec3 tl, vec3 tr, vec3 bl, vec3 br);
+
+vec2 vec2_zero();
+vec3 vec3_zero();
+vec4 vec4_zero();
 
 vec3 swizzle3f2(vec2);
 vec4 swizzle4f2(vec2);

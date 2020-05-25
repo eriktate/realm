@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include "linear.h"
 
-vec2 new_vec2(float x, float y) {
+vec2 vec2_new(float x, float y) {
 	return (vec2) {
 		x,
 		y,
 	};
 }
 
-vec3 new_vec3(float x, float y, float z) {
+vec3 vec3_new(float x, float y, float z) {
 	return (vec3) {
 		x,
 		y,
@@ -16,7 +16,31 @@ vec3 new_vec3(float x, float y, float z) {
 	};
 }
 
-vec4 new_vec4(float x, float y, float z, float w) {
+vec2 vec2_zero() {
+	return (vec2) {
+		0.0f,
+		0.0f,
+	};
+}
+
+vec3 vec3_zero() {
+	return (vec3) {
+		0.0f,
+		0.0f,
+		0.0f,
+	};
+}
+
+vec4 vec4_zero() {
+	return (vec4) {
+		0.0f,
+		0.0f,
+		0.0f,
+		0.0f,
+	};
+}
+
+vec4 vec4_new(float x, float y, float z, float w) {
 	return (vec4) {
 		x,
 		y,
@@ -24,6 +48,17 @@ vec4 new_vec4(float x, float y, float z, float w) {
 		w,
 	};
 }
+
+quad quad_new(vec3 tl, vec3 tr, vec3 bl, vec3 br) {
+	return (quad){
+		tl,
+		tr,
+		bl,
+		br,
+	};
+}
+
+
 
 vec3 swizzle3f2(vec2 vec) {
 	return (vec3){
