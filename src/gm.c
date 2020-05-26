@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "linear.h"
+#include "gm.h"
 
 vec2 vec2_new(float x, float y) {
 	return (vec2) {
@@ -49,7 +49,14 @@ vec4 vec4_new(float x, float y, float z, float w) {
 	};
 }
 
-quad quad_new(vec3 tl, vec3 tr, vec3 bl, vec3 br) {
+vertex vertex_new(vec3 pos, vec2 tex_coord) {
+	return (vertex){
+		pos,
+		tex_coord,
+	};
+}
+
+quad quad_new(vertex tl, vertex tr, vertex bl, vertex br) {
 	return (quad){
 		tl,
 		tr,
@@ -84,6 +91,30 @@ vec4 swizzle4f3(vec3 vec) {
 		vec.z,
 		1.0f,
 	};
+}
+
+
+float x_to_clip_space(float x, float width) {
+	return (x * (2/width)) - 1;
+}
+
+float y_to_clip_space(float y, float height) {
+	return -((y * (2/height)) - 1); // invert for y
+}
+
+float x_to_screen_space(float x, float width) {
+	return (2 * (x/width)) - 1;
+}
+
+float y_to_screen_space(float y, float height) {
+	return -((2 * (y/height)) - 1); // invert for y
+}
+
+vec2 vec2_to_clip_space(vec2 v, float width, float height) {
+	v.x = x_to_clip_space(v.x, width);
+	v.y = y_to_clip_space(v.y, height);
+
+	return v;
 }
 
 void print_vec2(vec2 vec) {

@@ -9,7 +9,7 @@ clean:
 
 build:
 	mkdir -p ./bin
-	clang -std=${C_VERSION} -Wall ${LIBS} -o ./bin/playground $(SRC_FILES) -v
+	clang -std=${C_VERSION} -Wall ${LIBS} -o ./bin/playground $(SRC_FILES)
 
 run:
 	./bin/playground

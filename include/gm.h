@@ -1,5 +1,5 @@
-#ifndef _LINEAR_H
-#define _LINEAR_H
+#ifndef _GM_H
+#define _GM_H
 
 typedef struct vec2 {
 	float x;
@@ -19,17 +19,23 @@ typedef struct vec4 {
 	float w;
 } vec4;
 
+typedef struct vertex {
+	vec3 pos;
+	vec2 tex_coord;
+} vertex;
+
 typedef struct quad {
-	vec3 tl;
-	vec3 tr;
-	vec3 bl;
-	vec3 br;
+	vertex tl;
+	vertex tr;
+	vertex bl;
+	vertex br;
 } quad;
 
 vec2 vec2_new(float, float);
 vec3 vec3_new(float, float, float);
 vec4 vec4_new(float, float, float, float);
-quad quad_new(vec3 tl, vec3 tr, vec3 bl, vec3 br);
+vertex vertex_new(vec3 pos, vec2 tex_coord);
+quad quad_new(vertex tl, vertex tr, vertex bl, vertex br);
 
 vec2 vec2_zero();
 vec3 vec3_zero();
@@ -39,8 +45,10 @@ vec3 swizzle3f2(vec2);
 vec4 swizzle4f2(vec2);
 vec4 swizzle4f3(vec3);
 
+vec2 vec2_to_clip_space(vec2, float, float);
+
 void print_vec2(vec2);
 void print_vec3(vec3);
 void print_vec4(vec4);
 
-#endif // _LINEAR_H
+#endif // _GM_H
