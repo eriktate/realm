@@ -95,12 +95,12 @@ int main(void)
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	int width, height, nrChannels;
 	stbi_set_flip_vertically_on_load(true);
-	unsigned char *data =stbi_load("mario.png", &width, &height, &nrChannels, 0);
+	unsigned char *data = stbi_load("mario.png", &width, &height, &nrChannels, 0);
 	if (data) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
@@ -172,17 +172,20 @@ int main(void)
 	unsigned int shader_id = load_shader_program("vert.glsl", "frag.glsl");
 	int uniform_window_size = glGetUniformLocation(shader_id, "window_size");
 	glUniform2f(uniform_window_size, (float)WIDTH, (float)HEIGHT);
-	// glUniform1i(glGetUniformLocation(shader_id, "tex"), 0);
+	glUniform1i(glGetUniformLocation(shader_id, "tex"), GL_TEXTURE0);
 
+	// alpha in texture won't work without setting the blend mode
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	while (!glfwWindowShouldClose(window))
 	{
 		process_input(window);
-
-		glClearColor(0.5, 0.3, 0.8, 1);
+		glClearColor(0.5f, 0.3f, 0.8f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		// glActiveTexture(GL_TEXTURE0);
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
+
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, indices.len, GL_UNSIGNED_INT, 0);
 		glfwSwapBuffers(window);
