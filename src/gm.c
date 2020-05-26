@@ -94,6 +94,14 @@ vec4 swizzle4f3(vec3 vec) {
 }
 
 
+float x_to_texture_space(float x, float width) {
+	return x/width;
+}
+
+float y_to_texture_space(float y, float height) {
+	return 1-(y/height);
+}
+
 float x_to_clip_space(float x, float width) {
 	return (x * (2/width)) - 1;
 }
@@ -113,6 +121,13 @@ float y_to_screen_space(float y, float height) {
 vec2 vec2_to_clip_space(vec2 v, float width, float height) {
 	v.x = x_to_clip_space(v.x, width);
 	v.y = y_to_clip_space(v.y, height);
+
+	return v;
+}
+
+vec2 vec2_to_texture_space(vec2 v, float width, float height) {
+	v.x = x_to_texture_space(v.x, width);
+	v.y = y_to_texture_space(v.y, height);
 
 	return v;
 }

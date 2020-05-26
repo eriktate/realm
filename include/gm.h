@@ -46,6 +46,7 @@ vec4 swizzle4f2(vec2);
 vec4 swizzle4f3(vec3);
 
 vec2 vec2_to_clip_space(vec2, float, float);
+vec2 vec2_to_texture_space(vec2, float, float);
 
 void print_vec2(vec2);
 void print_vec3(vec3);

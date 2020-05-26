@@ -6,8 +6,7 @@
 #include "gm.h"
 #include "file.h"
 #include "shader.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "texture.h"
 
 const int WIDTH = 640;
 const int HEIGHT = 480;
@@ -98,51 +97,39 @@ int main(void)
 	glViewport(0, 0, WIDTH, HEIGHT);
 
 	// load texture
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	int width, height, nrChannels;
-	stbi_set_flip_vertically_on_load(true);
-	unsigned char *data = stbi_load("mario.png", &width, &height, &nrChannels, 0);
-	if (data) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	} else {
+	texture tex;
+	if (load_texture("spritesheet.png", &tex)) {
 		printf("failed to load texture\n");
-		return 1;
+		return -1;
 	}
-	stbi_image_free(data);
 
+	// 128x160
+	// +16x+32
 	quad quads[] = {
 		quad_new(
 			// top left
 			vertex_new(
 				vec3_new(0.0f,  0.0f, 0.0f),
-				vec2_new(0.0f, 1.0f)
-				// vec2_to_clip_space(vec2_new(0.0f, 0.0f), width, height)
+				// vec2_new(0.0f, 1.0f)
+				vec2_to_texture_space(vec2_new(128.0f, 160.0f), tex.width, tex.height)
 			),
 			// top right
 			vertex_new(
-				vec3_new(256.0f, 0.0f, 0.0f),
-				vec2_new(1.0f, 1.0f)
-				// vec2_to_clip_space(vec2_new(420.0f, 0.0f), width, height)
+				vec3_new(64.0f, 0.0f, 0.0f),
+				// vec2_new(1.0f, 1.0f)
+				vec2_to_texture_space(vec2_new(144.0f, 160.0f), tex.width, tex.height)
 			),
 			// bottom left
 			vertex_new(
-				vec3_new(0.0f, 256.0f, 0.0f),
-				vec2_new(0.0f, 0.0f)
-				// vec2_to_clip_space(vec2_new(0.0f, 420.f), width, height)
+				vec3_new(0.0f, 128.0f, 0.0f),
+				// vec2_new(0.0f, 0.0f)
+				vec2_to_texture_space(vec2_new(128.0f, 192.f), tex.width, tex.height)
 			),
 			// bottom right
 			vertex_new(
-				vec3_new(256.0f, 256.0f, 0.0f),
-				vec2_new(1.0f, 0.0f)
-				// vec2_to_clip_space(vec2_new(420.0f, 420.0f), width, height)
+				vec3_new(64.0f, 128.0f, 0.0f),
+				// vec2_new(1.0f, 0.0f)
+				vec2_to_texture_space(vec2_new(144.0f, 192.0f), tex.width, tex.height)
 			)
 		),
 	};
@@ -196,7 +183,7 @@ int main(void)
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture);
+		glBindTexture(GL_TEXTURE_2D, tex.id);
 
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, indices.len, GL_UNSIGNED_INT, 0);
