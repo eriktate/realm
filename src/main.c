@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 #include "gm.h"
 #include "file.h"
+#include "shader.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -61,7 +62,6 @@ void print_index_arr(index_arr arr) {
 
 int main(void)
 {
-
 	GLFWwindow* window;
 
 	if (!glfwInit()) {
@@ -110,7 +110,6 @@ int main(void)
 	}
 	stbi_image_free(data);
 
-	printf("image dim: %d, %d", width, height);
 	quad quads[] = {
 		quad_new(
 			// top left
@@ -170,55 +169,10 @@ int main(void)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// load shaders
-	const char *vert_source = read_file("vert_shader.glsl");
-	const char *frag_source = read_file("frag_shader.glsl");
-
-	// vert shader
-	unsigned int vert_shader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vert_shader, 1, &vert_source, NULL);
-	glCompileShader(vert_shader);
-
-	// check for errors
-	int success;
-	char info_log[512];
-	glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &success);
-
-	if (!success) {
-		glGetShaderInfoLog(vert_shader, 512, NULL, info_log);
-		printf("vertex shader compilation failed: %s\n", info_log);
-	}
-
-	// frag shader
-	unsigned int frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(frag_shader, 1, &frag_source, NULL);
-	glCompileShader(frag_shader);
-
-	// check for errors
-	glGetShaderiv(frag_shader, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		glGetShaderInfoLog(frag_shader, 512, NULL, info_log);
-		printf("frag shader compilation failed: %s\n", info_log);
-	}
-
-	unsigned int shader_program = glCreateProgram();
-	glAttachShader(shader_program, vert_shader);
-	glAttachShader(shader_program, frag_shader);
-	glLinkProgram(shader_program);
-
-	// check for errors
-	glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
-	if(!success) {
-		glGetProgramInfoLog(shader_program, 512, NULL, info_log);
-		printf("shader linking failed: %s\n", info_log);
-	}
-
-	glUseProgram(shader_program);
-	glDeleteShader(vert_shader);
-	glDeleteShader(frag_shader);
-
-	int uniform_window_size = glGetUniformLocation(shader_program, "window_size");
+	unsigned int shader_id = load_shader_program("vert.glsl", "frag.glsl");
+	int uniform_window_size = glGetUniformLocation(shader_id, "window_size");
 	glUniform2f(uniform_window_size, (float)WIDTH, (float)HEIGHT);
-	glUniform1i(glGetUniformLocation(shader_program, "tex"), 0);
+	// glUniform1i(glGetUniformLocation(shader_id, "tex"), 0);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -227,7 +181,7 @@ int main(void)
 		glClearColor(0.5, 0.3, 0.8, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glActiveTexture(GL_TEXTURE0);
+		// glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, indices.len, GL_UNSIGNED_INT, 0);
