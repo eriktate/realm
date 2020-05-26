@@ -60,6 +60,13 @@ void print_index_arr(index_arr arr) {
 	printf(" ]\n");
 }
 
+void show_fps(GLFWwindow *w, int fps) {
+	char title[128];
+
+	sprintf(title, "Playground: %d", fps);
+	glfwSetWindowTitle(w, title);
+}
+
 int main(void)
 {
 	GLFWwindow* window;
@@ -72,6 +79,7 @@ int main(void)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwSwapInterval(0); // turn off vsync if left up to the game
 	window = glfwCreateWindow(WIDTH, HEIGHT, "playground", NULL, NULL);
 	if (!window)
 	{
@@ -177,6 +185,10 @@ int main(void)
 	// alpha in texture won't work without setting the blend mode
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	double last_time = glfwGetTime();
+	double elapsed = 0.0;
+	int frames = 0;
+
 	while (!glfwWindowShouldClose(window))
 	{
 		process_input(window);
@@ -191,6 +203,13 @@ int main(void)
 		glfwSwapBuffers(window);
 
 		glfwPollEvents();
+		frames++;
+		if (glfwGetTime() - last_time > 1.0) {
+			show_fps(window, frames);
+			frames = 0;
+			last_time = glfwGetTime();
+		}
+
 	}
 
 	glfwTerminate();
