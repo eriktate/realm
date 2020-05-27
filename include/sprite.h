@@ -30,12 +30,19 @@ typedef struct animation {
 	int *frames;
 } animation;
 
+typedef enum anim_id {
+	ANIM_PLAYER_IDLE,
+} anim_id;
+
 typedef struct sprite {
+	unsigned int id; // id assigned by the scene
 	vec3 pos;
 	int width;
 	int height;
-	animation anim;
-
+	anim_id anim;
 } sprite;
+
+quad get_quad_from_sprite(sprite *spr);
+sprite new_sprite(vec3 pos, int width, int height);
 
 #endif // _SPRITE_H

@@ -1,18 +1,43 @@
 #include <stdio.h>
 #include "gm.h"
 
-vec2 vec2_new(float x, float y) {
+vec2 new_vec2(float x, float y) {
 	return (vec2) {
 		x,
 		y,
 	};
 }
 
-vec3 vec3_new(float x, float y, float z) {
+vec3 new_vec3(float x, float y, float z) {
 	return (vec3) {
 		x,
 		y,
 		z,
+	};
+}
+
+vec4 new_vec4(float x, float y, float z, float w) {
+	return (vec4) {
+		x,
+		y,
+		z,
+		w,
+	};
+}
+
+vertex new_vertex(vec3 pos, vec2 tex_coord) {
+	return (vertex){
+		pos,
+		tex_coord,
+	};
+}
+
+quad new_quad(vertex tl, vertex tr, vertex bl, vertex br) {
+	return (quad){
+		tl,
+		tr,
+		bl,
+		br,
 	};
 }
 
@@ -40,30 +65,7 @@ vec4 vec4_zero() {
 	};
 }
 
-vec4 vec4_new(float x, float y, float z, float w) {
-	return (vec4) {
-		x,
-		y,
-		z,
-		w,
-	};
-}
 
-vertex vertex_new(vec3 pos, vec2 tex_coord) {
-	return (vertex){
-		pos,
-		tex_coord,
-	};
-}
-
-quad quad_new(vertex tl, vertex tr, vertex bl, vertex br) {
-	return (quad){
-		tl,
-		tr,
-		bl,
-		br,
-	};
-}
 
 
 
@@ -91,6 +93,14 @@ vec4 swizzle4f3(vec3 vec) {
 		vec.z,
 		1.0f,
 	};
+}
+
+vec3 add_vec3(vec3 left, vec3 right) {
+	left.x += right.x;
+	left.y += right.y;
+	left.z += right.z;
+
+	return left;
 }
 
 
@@ -142,4 +152,22 @@ void print_vec3(vec3 vec) {
 
 void print_vec4(vec4 vec) {
 	printf("{ x: %.3f, y: %.3f, z: %.3f, w: %.3f }\n", vec.x, vec.y, vec.z, vec.w);
+}
+
+void print_vertex(vertex vert) {
+	printf("Vertex { ");
+	print_vec3(vert.pos);
+	printf(", ");
+	print_vec2(vert.tex_coord);
+	printf(" }\n");
+}
+
+void print_quad(quad q) {
+	printf("Quad { ");
+	print_vertex(q.tl);
+	print_vertex(q.tr);
+	print_vertex(q.bl);
+	print_vertex(q.br);
+	printf(" }");
+	printf("\n");
 }

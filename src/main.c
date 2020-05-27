@@ -7,13 +7,20 @@
 #include "file.h"
 #include "shader.h"
 #include "texture.h"
+#include "sprite.h"
+#include "game.h"
 
 const int WIDTH = 640;
 const int HEIGHT = 480;
+vec3 player_pos;
 
 void process_input(GLFWwindow *w) {
 	if (glfwGetKey(w, GLFW_KEY_ESCAPE)) {
 		glfwSetWindowShouldClose(w, true);
+	}
+
+	if (glfwGetKey(w, GLFW_KEY_D)) {
+		player_pos = add_vec3(player_pos, new_vec3(1.0f, 0.0f, 0.0f));
 	}
 }
 
@@ -105,36 +112,39 @@ int main(void)
 
 	// 128x160
 	// +16x+32
-	quad quads[] = {
-		quad_new(
-			// top left
-			vertex_new(
-				vec3_new(0.0f,  0.0f, 0.0f),
-				// vec2_new(0.0f, 1.0f)
-				vec2_to_texture_space(vec2_new(128.0f, 160.0f), tex.width, tex.height)
-			),
-			// top right
-			vertex_new(
-				vec3_new(64.0f, 0.0f, 0.0f),
-				// vec2_new(1.0f, 1.0f)
-				vec2_to_texture_space(vec2_new(144.0f, 160.0f), tex.width, tex.height)
-			),
-			// bottom left
-			vertex_new(
-				vec3_new(0.0f, 128.0f, 0.0f),
-				// vec2_new(0.0f, 0.0f)
-				vec2_to_texture_space(vec2_new(128.0f, 192.f), tex.width, tex.height)
-			),
-			// bottom right
-			vertex_new(
-				vec3_new(64.0f, 128.0f, 0.0f),
-				// vec2_new(1.0f, 0.0f)
-				vec2_to_texture_space(vec2_new(144.0f, 192.0f), tex.width, tex.height)
-			)
-		),
-	};
+	// quad quads[] = {
+	// 	quad_new(
+	// 		// top left
+	// 		vertex_new(
+	// 			vec3_new(0.0f,  0.0f, 0.0f),
+	// 			// vec2_new(0.0f, 1.0f)
+	// 			vec2_to_texture_space(vec2_new(128.0f, 160.0f), tex.width, tex.height)
+	// 		),
+	// 		// top right
+	// 		vertex_new(
+	// 			vec3_new(64.0f, 0.0f, 0.0f),
+	// 			// vec2_new(1.0f, 1.0f)
+	// 			vec2_to_texture_space(vec2_new(144.0f, 160.0f), tex.width, tex.height)
+	// 		),
+	// 		// bottom left
+	// 		vertex_new(
+	// 			vec3_new(0.0f, 128.0f, 0.0f),
+	// 			// vec2_new(0.0f, 0.0f)
+	// 			vec2_to_texture_space(vec2_new(128.0f, 192.f), tex.width, tex.height)
+	// 		),
+	// 		// bottom right
+	// 		vertex_new(
+	// 			vec3_new(64.0f, 128.0f, 0.0f),
+	// 			// vec2_new(1.0f, 0.0f)
+	// 			vec2_to_texture_space(vec2_new(144.0f, 192.0f), tex.width, tex.height)
+	// 		)
+	// 	),
+	// };
+	sprite player = new_sprite(player_pos, 128, 256);
+	scene sc = create_scene(5);
+	scene_add_sprite(&sc, player);
 
-	index_arr indices = generate_indices(sizeof(quads) / sizeof(quad));
+	index_arr indices = generate_indices(sc.len);
 
 	// generate VAO
 	unsigned int VAO;
@@ -145,7 +155,7 @@ int main(void)
 	unsigned int VBO;
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quads), quads, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sc.len * sizeof(quad), sc.quads, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void *)0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void *)sizeof(vec3));
 
@@ -177,7 +187,16 @@ int main(void)
 
 	while (!glfwWindowShouldClose(window))
 	{
+		// update
 		process_input(window);
+		set_sprite_pos(&sc, player.id, player_pos);
+
+		// generate GPU data
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, sc.len * sizeof(quad), sc.quads, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		// draw
 		glClearColor(0.5f, 0.3f, 0.8f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 

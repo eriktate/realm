@@ -31,11 +31,11 @@ typedef struct quad {
 	vertex br;
 } quad;
 
-vec2 vec2_new(float, float);
-vec3 vec3_new(float, float, float);
-vec4 vec4_new(float, float, float, float);
-vertex vertex_new(vec3 pos, vec2 tex_coord);
-quad quad_new(vertex tl, vertex tr, vertex bl, vertex br);
+vec2 new_vec2(float, float);
+vec3 new_vec3(float, float, float);
+vec4 new_vec4(float, float, float, float);
+vertex new_vertex(vec3 pos, vec2 tex_coord);
+quad new_quad(vertex tl, vertex tr, vertex bl, vertex br);
 
 vec2 vec2_zero();
 vec3 vec3_zero();
@@ -45,11 +45,16 @@ vec3 swizzle3f2(vec2);
 vec4 swizzle4f2(vec2);
 vec4 swizzle4f3(vec3);
 
+vec3 add_vec3(vec3, vec3);
+
 vec2 vec2_to_clip_space(vec2, float, float);
 vec2 vec2_to_texture_space(vec2, float, float);
 
 void print_vec2(vec2);
 void print_vec3(vec3);
 void print_vec4(vec4);
+
+void print_vertex(vertex);
+void print_quad(quad);
 
 #endif // _GM_H
