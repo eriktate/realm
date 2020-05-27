@@ -173,7 +173,6 @@ int main(void)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	double last_time = glfwGetTime();
-	double elapsed = 0.0;
 	int frames = 0;
 
 	while (!glfwWindowShouldClose(window))

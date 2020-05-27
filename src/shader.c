@@ -8,7 +8,7 @@ unsigned int load_shader_program(char *vert_name , char *frag_name) {
 	char *frag_source = read_file(frag_name);
 
 	unsigned int vert_shader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vert_shader, 1, &vert_source, NULL);
+	glShaderSource(vert_shader, 1, (const char *const *)&vert_source, NULL);
 	glCompileShader(vert_shader);
 
 	int success;
@@ -21,7 +21,7 @@ unsigned int load_shader_program(char *vert_name , char *frag_name) {
 	}
 
 	unsigned int frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(frag_shader, 1, &frag_source, NULL);
+	glShaderSource(frag_shader, 1, (const char *const *)&frag_source, NULL);
 	glCompileShader(frag_shader);
 	glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &success);
 
