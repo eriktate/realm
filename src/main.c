@@ -3,37 +3,45 @@
 #include <stdbool.h>
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
+#include "types.h"
 #include "gm.h"
 #include "file.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "shader.h"
+#include "texture.h"
+#include "sprite.h"
+#include "game.h"
 
-const int WIDTH = 640;
-const int HEIGHT = 480;
+const i32 WIDTH = 640;
+const i32 HEIGHT = 480;
+vec3 player_pos;
 
 void process_input(GLFWwindow *w) {
 	if (glfwGetKey(w, GLFW_KEY_ESCAPE)) {
 		glfwSetWindowShouldClose(w, true);
+	}
+
+	if (glfwGetKey(w, GLFW_KEY_D)) {
+		player_pos = add_vec3(player_pos, new_vec3(1.0f, 0.0f, 0.0f));
 	}
 }
 
 typedef struct index_arr {
 	size_t len;
 	size_t size;
-	unsigned int *indices;
+	u32 *indices;
 } index_arr;
 
 // brute force indices for a number of quads
-index_arr generate_indices(int quad_count) {
+index_arr generate_indices(i32 quad_count) {
 	size_t len = quad_count * 6;
-	size_t size = len * sizeof(unsigned int);
+	size_t size = len * sizeof(u32);
 
-	unsigned int *indices = (unsigned int *)malloc(size);
-	for (int i = 0; i < quad_count; i++) {
-		unsigned int tl = i * 4;
-		unsigned int tr = i * 4 +1;
-		unsigned int bl = i * 4 + 2;
-		unsigned int br = i * 4 + 3;
+	u32 *indices = (u32 *)malloc(size);
+	for (i32 i = 0; i < quad_count; i++) {
+		u32 tl = i * 4;
+		u32 tr = i * 4 +1;
+		u32 bl = i * 4 + 2;
+		u32 br = i * 4 + 3;
 
 		indices[i*6] = tl;
 		indices[i*6+1] = tr;
@@ -52,16 +60,22 @@ index_arr generate_indices(int quad_count) {
 
 void print_index_arr(index_arr arr) {
 	printf("[ ");
-	for (int i = 0; i < arr.len; i++) {
+	for (i32 i = 0; i < arr.len; i++) {
 		printf("%d, ", arr.indices[i]);
 	}
 
 	printf(" ]\n");
 }
 
+void show_fps(GLFWwindow *w, i32 fps) {
+	char title[128];
+
+	sprintf(title, "Playground: %d", fps);
+	glfwSetWindowTitle(w, title);
+}
+
 int main(void)
 {
-
 	GLFWwindow* window;
 
 	if (!glfwInit()) {
@@ -72,7 +86,8 @@ int main(void)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	window = glfwCreateWindow(WIDTH, HEIGHT, "playground", NULL, NULL);
+	glfwSwapInterval(0); // turn off vsync if left up to the game
+	window = glfwCreateWindow(WIDTH, HEIGHT, "float - playground", NULL, NULL);
 	if (!window)
 	{
 		printf("window creation failed\n");
@@ -90,73 +105,63 @@ int main(void)
 	glViewport(0, 0, WIDTH, HEIGHT);
 
 	// load texture
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	int width, height, nrChannels;
-	stbi_set_flip_vertically_on_load(true);
-	unsigned char *data =stbi_load("mario.png", &width, &height, &nrChannels, 0);
-	if (data) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	} else {
+	texture tex;
+	if (load_texture("spritesheet.png", &tex)) {
 		printf("failed to load texture\n");
-		return 1;
+		return -1;
 	}
-	stbi_image_free(data);
 
-	printf("image dim: %d, %d", width, height);
-	quad quads[] = {
-		quad_new(
-			// top left
-			vertex_new(
-				vec3_new(0.0f,  0.0f, 0.0f),
-				vec2_new(0.0f, 1.0f)
-				// vec2_to_clip_space(vec2_new(0.0f, 0.0f), width, height)
-			),
-			// top right
-			vertex_new(
-				vec3_new(256.0f, 0.0f, 0.0f),
-				vec2_new(1.0f, 1.0f)
-				// vec2_to_clip_space(vec2_new(420.0f, 0.0f), width, height)
-			),
-			// bottom left
-			vertex_new(
-				vec3_new(0.0f, 256.0f, 0.0f),
-				vec2_new(0.0f, 0.0f)
-				// vec2_to_clip_space(vec2_new(0.0f, 420.f), width, height)
-			),
-			// bottom right
-			vertex_new(
-				vec3_new(256.0f, 256.0f, 0.0f),
-				vec2_new(1.0f, 0.0f)
-				// vec2_to_clip_space(vec2_new(420.0f, 420.0f), width, height)
-			)
-		),
-	};
+	// 128x160
+	// +16x+32
+	// quad quads[] = {
+	// 	quad_new(
+	// 		// top left
+	// 		vertex_new(
+	// 			vec3_new(0.0f,  0.0f, 0.0f),
+	// 			// vec2_new(0.0f, 1.0f)
+	// 			vec2_to_texture_space(vec2_new(128.0f, 160.0f), tex.width, tex.height)
+	// 		),
+	// 		// top right
+	// 		vertex_new(
+	// 			vec3_new(64.0f, 0.0f, 0.0f),
+	// 			// vec2_new(1.0f, 1.0f)
+	// 			vec2_to_texture_space(vec2_new(144.0f, 160.0f), tex.width, tex.height)
+	// 		),
+	// 		// bottom left
+	// 		vertex_new(
+	// 			vec3_new(0.0f, 128.0f, 0.0f),
+	// 			// vec2_new(0.0f, 0.0f)
+	// 			vec2_to_texture_space(vec2_new(128.0f, 192.f), tex.width, tex.height)
+	// 		),
+	// 		// bottom right
+	// 		vertex_new(
+	// 			vec3_new(64.0f, 128.0f, 0.0f),
+	// 			// vec2_new(1.0f, 0.0f)
+	// 			vec2_to_texture_space(vec2_new(144.0f, 192.0f), tex.width, tex.height)
+	// 		)
+	// 	),
+	// };
+	sprite player_meta = new_sprite(player_pos, 128, 256);
+	scene sc = create_scene(5);
+	sprite *player = scene_add_sprite(&sc, player_meta);
 
-	index_arr indices = generate_indices(sizeof(quads) / sizeof(quad));
+	index_arr indices = generate_indices(sc.len);
 
 	// generate VAO
-	unsigned int VAO;
+	u32 VAO;
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
 
 	// generate vertex buffer
-	unsigned int VBO;
+	u32 VBO;
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quads), quads, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sc.len * sizeof(quad), sc.quads, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void *)0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void *)sizeof(vec3));
 
 	// generate element buffer
-	unsigned int EBO;
+	u32 EBO;
 	glGenBuffers(1, &EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size, indices.indices, GL_STATIC_DRAW);
@@ -170,70 +175,47 @@ int main(void)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// load shaders
-	const char *vert_source = read_file("vert_shader.glsl");
-	const char *frag_source = read_file("frag_shader.glsl");
+	u32 shader_id = load_shader_program("vert.glsl", "frag.glsl");
+	i32 uniform_window_size = glGetUniformLocation(shader_id, "window_size");
+	glUniform2f(uniform_window_size, (f32)WIDTH, (f32)HEIGHT);
+	glUniform1i(glGetUniformLocation(shader_id, "tex"), GL_TEXTURE0);
 
-	// vert shader
-	unsigned int vert_shader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vert_shader, 1, &vert_source, NULL);
-	glCompileShader(vert_shader);
-
-	// check for errors
-	int success;
-	char info_log[512];
-	glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &success);
-
-	if (!success) {
-		glGetShaderInfoLog(vert_shader, 512, NULL, info_log);
-		printf("vertex shader compilation failed: %s\n", info_log);
-	}
-
-	// frag shader
-	unsigned int frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(frag_shader, 1, &frag_source, NULL);
-	glCompileShader(frag_shader);
-
-	// check for errors
-	glGetShaderiv(frag_shader, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		glGetShaderInfoLog(frag_shader, 512, NULL, info_log);
-		printf("frag shader compilation failed: %s\n", info_log);
-	}
-
-	unsigned int shader_program = glCreateProgram();
-	glAttachShader(shader_program, vert_shader);
-	glAttachShader(shader_program, frag_shader);
-	glLinkProgram(shader_program);
-
-	// check for errors
-	glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
-	if(!success) {
-		glGetProgramInfoLog(shader_program, 512, NULL, info_log);
-		printf("shader linking failed: %s\n", info_log);
-	}
-
-	glUseProgram(shader_program);
-	glDeleteShader(vert_shader);
-	glDeleteShader(frag_shader);
-
-	int uniform_window_size = glGetUniformLocation(shader_program, "window_size");
-	glUniform2f(uniform_window_size, (float)WIDTH, (float)HEIGHT);
-	glUniform1i(glGetUniformLocation(shader_program, "tex"), 0);
+	// alpha in texture won't work without setting the blend mode
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	f64 last_time = glfwGetTime();
+	i32 frames = 0;
 
 	while (!glfwWindowShouldClose(window))
 	{
+		// update
 		process_input(window);
+		set_sprite_pos(player, player_pos);
 
-		glClearColor(0.5, 0.3, 0.8, 1);
+		// generate GPU data
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, sc.len * sizeof(quad), sc.quads, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		// draw
+		glClearColor(0.5f, 0.3f, 0.8f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture);
+		glBindTexture(GL_TEXTURE_2D, tex.id);
+
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, indices.len, GL_UNSIGNED_INT, 0);
 		glfwSwapBuffers(window);
 
 		glfwPollEvents();
+		frames++;
+		if (glfwGetTime() - last_time > 1.0) {
+			show_fps(window, frames);
+			frames = 0;
+			last_time = glfwGetTime();
+		}
+
 	}
 
 	glfwTerminate();
