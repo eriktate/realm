@@ -50,6 +50,8 @@ vec3 add_vec3(vec3, vec3);
 vec2 vec2_to_clip_space(vec2, float, float);
 vec2 vec2_to_texture_space(vec2, float, float);
 
+// vertex vertex_set_pos(vertex)
+
 void print_vec2(vec2);
 void print_vec3(vec3);
 void print_vec4(vec4);

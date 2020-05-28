@@ -40,9 +40,13 @@ typedef struct sprite {
 	int width;
 	int height;
 	anim_id anim;
+	quad *_quad;
 } sprite;
 
 quad get_quad_from_sprite(sprite *spr);
 sprite new_sprite(vec3 pos, int width, int height);
+
+// sprite setters will also update the underlying quad
+void set_sprite_pos(sprite *spr, vec3 pos);
 
 #endif // _SPRITE_H

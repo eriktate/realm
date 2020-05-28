@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
+#include "types.h"
 #include "gm.h"
 #include "file.h"
 #include "shader.h"
@@ -10,8 +11,8 @@
 #include "sprite.h"
 #include "game.h"
 
-const int WIDTH = 640;
-const int HEIGHT = 480;
+const i32 WIDTH = 640;
+const i32 HEIGHT = 480;
 vec3 player_pos;
 
 void process_input(GLFWwindow *w) {
@@ -27,20 +28,20 @@ void process_input(GLFWwindow *w) {
 typedef struct index_arr {
 	size_t len;
 	size_t size;
-	unsigned int *indices;
+	u32 *indices;
 } index_arr;
 
 // brute force indices for a number of quads
-index_arr generate_indices(int quad_count) {
+index_arr generate_indices(i32 quad_count) {
 	size_t len = quad_count * 6;
-	size_t size = len * sizeof(unsigned int);
+	size_t size = len * sizeof(u32);
 
-	unsigned int *indices = (unsigned int *)malloc(size);
-	for (int i = 0; i < quad_count; i++) {
-		unsigned int tl = i * 4;
-		unsigned int tr = i * 4 +1;
-		unsigned int bl = i * 4 + 2;
-		unsigned int br = i * 4 + 3;
+	u32 *indices = (u32 *)malloc(size);
+	for (i32 i = 0; i < quad_count; i++) {
+		u32 tl = i * 4;
+		u32 tr = i * 4 +1;
+		u32 bl = i * 4 + 2;
+		u32 br = i * 4 + 3;
 
 		indices[i*6] = tl;
 		indices[i*6+1] = tr;
@@ -59,14 +60,14 @@ index_arr generate_indices(int quad_count) {
 
 void print_index_arr(index_arr arr) {
 	printf("[ ");
-	for (int i = 0; i < arr.len; i++) {
+	for (i32 i = 0; i < arr.len; i++) {
 		printf("%d, ", arr.indices[i]);
 	}
 
 	printf(" ]\n");
 }
 
-void show_fps(GLFWwindow *w, int fps) {
+void show_fps(GLFWwindow *w, i32 fps) {
 	char title[128];
 
 	sprintf(title, "Playground: %d", fps);
@@ -86,7 +87,7 @@ int main(void)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwSwapInterval(0); // turn off vsync if left up to the game
-	window = glfwCreateWindow(WIDTH, HEIGHT, "playground", NULL, NULL);
+	window = glfwCreateWindow(WIDTH, HEIGHT, "float - playground", NULL, NULL);
 	if (!window)
 	{
 		printf("window creation failed\n");
@@ -140,19 +141,19 @@ int main(void)
 	// 		)
 	// 	),
 	// };
-	sprite player = new_sprite(player_pos, 128, 256);
+	sprite player_meta = new_sprite(player_pos, 128, 256);
 	scene sc = create_scene(5);
-	scene_add_sprite(&sc, player);
+	sprite *player = scene_add_sprite(&sc, player_meta);
 
 	index_arr indices = generate_indices(sc.len);
 
 	// generate VAO
-	unsigned int VAO;
+	u32 VAO;
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
 
 	// generate vertex buffer
-	unsigned int VBO;
+	u32 VBO;
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sc.len * sizeof(quad), sc.quads, GL_STATIC_DRAW);
@@ -160,7 +161,7 @@ int main(void)
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void *)sizeof(vec3));
 
 	// generate element buffer
-	unsigned int EBO;
+	u32 EBO;
 	glGenBuffers(1, &EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size, indices.indices, GL_STATIC_DRAW);
@@ -174,22 +175,22 @@ int main(void)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// load shaders
-	unsigned int shader_id = load_shader_program("vert.glsl", "frag.glsl");
-	int uniform_window_size = glGetUniformLocation(shader_id, "window_size");
-	glUniform2f(uniform_window_size, (float)WIDTH, (float)HEIGHT);
+	u32 shader_id = load_shader_program("vert.glsl", "frag.glsl");
+	i32 uniform_window_size = glGetUniformLocation(shader_id, "window_size");
+	glUniform2f(uniform_window_size, (f32)WIDTH, (f32)HEIGHT);
 	glUniform1i(glGetUniformLocation(shader_id, "tex"), GL_TEXTURE0);
 
 	// alpha in texture won't work without setting the blend mode
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	double last_time = glfwGetTime();
-	int frames = 0;
+	f64 last_time = glfwGetTime();
+	i32 frames = 0;
 
 	while (!glfwWindowShouldClose(window))
 	{
 		// update
 		process_input(window);
-		set_sprite_pos(&sc, player.id, player_pos);
+		set_sprite_pos(player, player_pos);
 
 		// generate GPU data
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);

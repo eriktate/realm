@@ -18,7 +18,6 @@ typedef struct game {
 } game;
 
 scene create_scene(size_t cap);
-unsigned int scene_add_sprite(scene *sc, sprite spr);
-void set_sprite_pos(scene *sc, unsigned int id, vec3 pos);
+sprite *scene_add_sprite(scene *sc, sprite spr);
 
 #endif // _GAME_H

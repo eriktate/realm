@@ -40,17 +40,15 @@ scene create_scene(size_t cap) {
 	};
 }
 
-unsigned int scene_add_sprite(scene *sc, sprite spr) {
+sprite *scene_add_sprite(scene *sc, sprite spr) {
+	spr.id = sc->len;
 	sc->sprites[sc->len] = spr;
 	sc->quads[sc->len] = get_quad_from_sprite(&spr);
 	sc->len++;
 
+	sprite *added = &(sc->sprites[(sc->len)-1]);
+	added->_quad = &(sc->quads[sc->len-1]);
 	grow_capacity(sc);
 
-	return sc->len-1;
-}
-
-void set_sprite_pos(scene *sc, unsigned int id, vec3 pos) {
-	sc->sprites[id].pos = pos;
-	sc->quads[id] = get_quad_from_sprite(&sc->sprites[id]);
+	return added;
 }
