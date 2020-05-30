@@ -141,7 +141,15 @@ int main(void)
 	// 		)
 	// 	),
 	// };
-	sprite player_meta = new_sprite(player_pos, 128, 256);
+	sprite player_meta = new_sprite(player_pos, 128, 256, true);
+	player_meta.anim = new_animation(6, 3, new_vec2(128.0f, 160.0f), 16, 32, tex.width, tex.height);
+	// player_meta.tex = (tex_quad){
+	// 	.tl = vec2_to_texture_space(new_vec2(128.0f, 160.0f), tex.width, tex.height),
+	// 	.tr = vec2_to_texture_space(new_vec2(144.0f, 160.0f), tex.width, tex.height),
+	// 	.bl = vec2_to_texture_space(new_vec2(128.0f, 192.0f), tex.width, tex.height),
+	// 	.br = vec2_to_texture_space(new_vec2(144.0f, 192.0f), tex.width, tex.height),
+	// };
+
 	scene sc = create_scene(5);
 	sprite *player = scene_add_sprite(&sc, player_meta);
 
@@ -183,13 +191,18 @@ int main(void)
 	// alpha in texture won't work without setting the blend mode
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	f64 last_time = glfwGetTime();
+	f64 last_frame = glfwGetTime();
+	f64 last_second = glfwGetTime();
 	i32 frames = 0;
+	f64 delta = 0;
 
 	while (!glfwWindowShouldClose(window))
 	{
 		// update
+		delta = glfwGetTime() - last_frame;
+		last_frame = glfwGetTime();
 		process_input(window);
+		sprite_animate(player, delta);
 		set_sprite_pos(player, player_pos);
 
 		// generate GPU data
@@ -210,10 +223,10 @@ int main(void)
 
 		glfwPollEvents();
 		frames++;
-		if (glfwGetTime() - last_time > 1.0) {
+		if (glfwGetTime() - last_second > 1.0) {
 			show_fps(window, frames);
 			frames = 0;
-			last_time = glfwGetTime();
+			last_second = glfwGetTime();
 		}
 
 	}
