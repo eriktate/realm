@@ -1,6 +1,9 @@
 #ifndef _GM_H
 #define _GM_H
 
+#include <stdbool.h>
+#include "types.h"
+
 typedef struct vec2 {
 	float x;
 	float y;
@@ -49,6 +52,20 @@ vec3 add_vec3(vec3, vec3);
 
 vec2 vec2_to_clip_space(vec2, float, float);
 vec2 vec2_to_texture_space(vec2, float, float);
+
+bool compare_f32(f32 left, f32 right);
+
+f32 mag2(vec2 v);
+f32 mag3(vec3 v);
+f32 mag4(vec4 v);
+
+vec2 unit2(vec2 v);
+vec3 unit3(vec3 v);
+vec4 unit4(vec4 v);
+
+vec2 scale2(vec2 v, f32 s);
+vec3 scale3(vec3 v, f32 s);
+vec4 scale4(vec4 v, f32 s);
 
 // vertex vertex_set_pos(vertex)
 

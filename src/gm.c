@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include "gm.h"
 
 vec2 new_vec2(float x, float y) {
@@ -140,6 +141,61 @@ vec2 vec2_to_texture_space(vec2 v, float width, float height) {
 	v.y = y_to_texture_space(v.y, height);
 
 	return v;
+}
+
+bool compare_f32(f32 left, f32 right) {
+	return left > (right - 0.00001) && left < (right + 0.00001);
+}
+
+f32 mag2(vec2 v) {
+	return sqrt(v.x * v.x + v.y * v.y);
+}
+
+f32 mag3(vec3 v) {
+	return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
+f32 mag4(vec4 v) {
+	return sqrt(v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w);
+}
+
+vec2 unit2(vec2 v) {
+	f32 mag = mag2(v);
+	if (compare_f32(mag, 0.0f)) {
+		return vec2_zero();
+	}
+
+	return new_vec2(v.x/mag, v.y/mag);
+}
+
+vec3 unit3(vec3 v) {
+	f32 mag = mag3(v);
+	if (compare_f32(mag, 0.0f)) {
+		return vec3_zero();
+	}
+
+	return new_vec3(v.x/mag, v.y/mag, v.z/mag);
+}
+
+vec4 unit4(vec4 v) {
+	f32 mag = mag4(v);
+	if (compare_f32(mag, 0.0f)) {
+		return vec4_zero();
+	}
+
+	return new_vec4(v.x/mag, v.y/mag, v.z/mag, v.w/mag);
+}
+
+vec2 scale2(vec2 v, f32 s) {
+	return new_vec2(v.x * s, v.y * s);
+}
+
+vec3 scale3(vec3 v, f32 s) {
+	return new_vec3(v.x * s, v.y * s, v.z * s);
+}
+
+vec4 scale4(vec4 v, f32 s) {
+	return new_vec4(v.x * s, v.y * s, v.z * s, v.w * s);
 }
 
 void print_vec2(vec2 vec) {

@@ -20,21 +20,23 @@ void process_input(GLFWwindow *w) {
 		glfwSetWindowShouldClose(w, true);
 	}
 
+	vec3 move_vec = new_vec3(0.0f, 0.0f, 0.0f);
 	if (glfwGetKey(w, GLFW_KEY_D)) {
-		player_pos = add_vec3(player_pos, new_vec3(3.0f, 0.0f, 0.0f));
-	}
-
-	if (glfwGetKey(w, GLFW_KEY_A)) {
-		player_pos = add_vec3(player_pos, new_vec3(-3.0f, 0.0f, 0.0f));
+		move_vec.x = 1.0f;
+	} else if (glfwGetKey(w, GLFW_KEY_A)) {
+		move_vec.x = -1.0f;
 	}
 
 	if (glfwGetKey(w, GLFW_KEY_W)) {
-		player_pos = add_vec3(player_pos, new_vec3(0.0f, -3.0f, 0.0f));
+		move_vec.y = -1.0f;
+	} else if (glfwGetKey(w, GLFW_KEY_S)) {
+		move_vec.y = 1.0f;
 	}
 
-	if (glfwGetKey(w, GLFW_KEY_S)) {
-		player_pos = add_vec3(player_pos, new_vec3(0.0f, 3.0f, 0.0f));
-	}
+	move_vec = scale3(unit3(move_vec), 3.0f);
+	f32 old_y = player_pos.y;
+	player_pos = add_vec3(player_pos, move_vec);
+	printf("old y: %f, new y: %f\n", old_y, player_pos.y);
 }
 
 typedef struct index_arr {
