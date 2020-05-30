@@ -8,4 +8,5 @@ typedef struct texture {
 } texture;
 
 int load_texture(char *fname, texture *tex);
+
 #endif // _TEXTURE_H

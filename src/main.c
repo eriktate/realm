@@ -141,8 +141,10 @@ int main(void)
 	// 		)
 	// 	),
 	// };
+	atlas player_atlas = new_atlas(tex, 128, 160, 16, 32, 0, 0, 3, 3);
 	sprite player_meta = new_sprite(player_pos, 128, 256, true);
-	player_meta.anim = new_animation(6, 3, new_vec2(128.0f, 160.0f), 16, 32, tex.width, tex.height);
+	int player_frames[3] = {0, 1, 2};
+	player_meta.anim = new_animation(player_atlas, 6, 3, player_frames);
 	// player_meta.tex = (tex_quad){
 	// 	.tl = vec2_to_texture_space(new_vec2(128.0f, 160.0f), tex.width, tex.height),
 	// 	.tr = vec2_to_texture_space(new_vec2(144.0f, 160.0f), tex.width, tex.height),

@@ -19,11 +19,15 @@ typedef struct tex_quad {
 // an atlas is a specific region within a texture divided into frames
 typedef struct atlas {
 	texture tex; // OpenGL texture ID
-	vec2 offset;
+	i32 offset_x;
+	i32 offset_y;
 	i32 width; // frame width
 	i32 height; // frame height
+	i32 x_sep;
+	i32 y_sep;
 	i32 rows; // number of rows for an atlas
 	i32 columns; // numberer of columns for an atlas
+	tex_quad *frames;
 } atlas;
 
 // an animation is a configuration of frames to play
@@ -33,6 +37,7 @@ typedef struct animation {
 	f32 current_frame;
 	i32 frame_count;
 	tex_quad *frames;
+	atlas atl;
 } animation;
 
 typedef enum anim_id {
@@ -68,8 +73,9 @@ void set_sprite_pos(sprite *spr, vec3 pos);
 void sprite_animate(sprite *spr, f64 delta);
 
 vec2 new_tex_coord(f32 x, f32 y, i32 width, i32 height);
+atlas new_atlas(texture tex, i32 offset_x, i32 offset_y, i32 width, i32 height, i32 x_sep, i32 y_sep, i32 rows, i32 cols);
 
 // TODO (etate): Temporary helper
-animation new_animation(f32 framerate, i32 frame_count, vec2 offset, i32 frame_width, i32 frame_height, i32 tex_width, i32 tex_height);
+animation new_animation(atlas atl, f32 framerate, i32 frame_count, int *frames);
 
 #endif // _SPRITE_H

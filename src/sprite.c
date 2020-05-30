@@ -96,20 +96,47 @@ vec2 new_tex_coord(f32 x, f32 y, i32 width, i32 height) {
 	return vec2_to_texture_space(new_vec2(x, y), width, height);
 }
 
-animation new_animation(f32 framerate, i32 frame_count, vec2 offset, i32 frame_width, i32 frame_height, i32 tex_width, i32 tex_height) {
-	tex_quad *frames = (tex_quad *)malloc(sizeof(tex_quad) * 30);
-	for (int i = 0; i < frame_count; i++) {
-		frames[i] = (tex_quad){
-			.tl = new_tex_coord(offset.x + (i * frame_width), offset.y, tex_width, tex_height),
-			.tr = new_tex_coord(offset.x + (i * frame_width) + frame_width, offset.y, tex_width, tex_height),
-			.bl = new_tex_coord(offset.x + (i * frame_width), offset.y + frame_height, tex_width, tex_height),
-			.br = new_tex_coord(offset.x + (i * frame_width) + frame_width, offset.y + frame_height, tex_width, tex_height),
-		};
+animation new_animation(atlas atl, f32 framerate, i32 frame_count, int *frames) {
+	tex_quad *frame_quads = (tex_quad *)malloc(sizeof(tex_quad) * frame_count);
+
+	for (i32 i = 0; i < frame_count; i++) {
+		frame_quads[i] = atl.frames[frames[i]];
 	}
 
 	return (animation){
 		.framerate = framerate,
 		.frame_count = frame_count,
+		.frames = frame_quads,
+	};
+}
+
+atlas new_atlas(texture tex, i32 offset_x, i32 offset_y, i32 width, i32 height, i32 x_sep, i32 y_sep, i32 rows, i32 cols) {
+	tex_quad *frames = (tex_quad *)malloc(sizeof(tex_quad) * (rows * cols));
+	i32 count = 0;
+	for (i32 r = 0; r < rows; r++) {
+		for (i32 c = 0; c < cols; c++) { // lol c++
+			vec2 tl = new_vec2(offset_x + (x_sep * (c + 1) + (c * width)), offset_y + (y_sep * (r + 1)) + (r * height));
+			tex_quad frame = (tex_quad){
+				.tl = vec2_to_texture_space(tl, tex.width, tex.height),
+				.tr = new_tex_coord(tl.x + width, tl.y, tex.width, tex.height),
+				.bl = new_tex_coord(tl.x, tl.y + height, tex.width, tex.height),
+				.br = new_tex_coord(tl.x + width, tl.y + height, tex.width, tex.height),
+			};
+
+			frames[count++] = frame;
+		}
+	}
+
+	return (atlas){
+		.tex = tex,
+		.offset_x = offset_x,
+		.offset_y = offset_y,
+		.width = width,
+		.height = height,
+		.x_sep = x_sep,
+		.y_sep = y_sep,
+		.rows = rows,
+		.columns = cols,
 		.frames = frames,
 	};
 }
