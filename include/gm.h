@@ -76,6 +76,7 @@ vec3 scale3(vec3 v, f32 s);
 vec4 scale4(vec4 v, f32 s);
 
 bool overlaps(rect left, rect right);
+void translate_rect(rect *r, vec3 v);
 
 // vertex vertex_set_pos(vertex)
 

@@ -52,7 +52,7 @@ typedef struct sprite {
 	vec3 pos;
 	i32 width;
 	i32 height;
-
+	rect hitbox;
 	// animation or texture to render
 	bool animated;
 	union {
@@ -71,6 +71,9 @@ sprite new_sprite(vec3 pos, i32 width, i32 height, bool animated);
 // sprite setters will also update the underlying quad
 void set_sprite_pos(sprite *spr, vec3 pos);
 void sprite_animate(sprite *spr, f64 delta);
+rect get_hitbox(sprite *spr);
+// get a sprites hitbox if it were at a given position
+rect get_potential_hitbox(sprite *spr, vec3 pos);
 
 vec2 new_tex_coord(f32 x, f32 y, i32 width, i32 height);
 atlas new_atlas(texture tex, i32 offset_x, i32 offset_y, i32 width, i32 height, i32 x_sep, i32 y_sep, i32 rows, i32 cols);

@@ -78,8 +78,18 @@ sprite new_sprite(vec3 pos, int width, int height, bool animated) {
 		.width = width,
 		.height = height,
 		.animated = animated,
+		.hitbox = new_rect(0, 0, width, height), // default hitbox matches sprite dimensions
 		._quad = NULL,
 	};
+}
+
+// generate relative hitbox
+rect get_hitbox(sprite *spr) {
+	return new_rect(spr->pos.x + spr->hitbox.x, spr->pos.y + spr->hitbox.y, spr->hitbox.width, spr->hitbox.height);
+}
+
+rect get_potential_hitbox(sprite *spr, vec3 pos) {
+	return new_rect(pos.x + spr->hitbox.x, pos.y + spr->hitbox.y, spr->hitbox.width, spr->hitbox.height);
 }
 
 void set_sprite_pos(sprite *spr, vec3 pos) {

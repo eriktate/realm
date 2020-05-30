@@ -10,12 +10,13 @@
 #include "texture.h"
 #include "sprite.h"
 #include "game.h"
+#include "gl.h"
 
 const i32 WIDTH = 640;
 const i32 HEIGHT = 480;
 vec3 player_pos;
 
-void process_input(GLFWwindow *w) {
+void process_input(GLFWwindow *w, scene *sc) {
 	if (glfwGetKey(w, GLFW_KEY_ESCAPE)) {
 		glfwSetWindowShouldClose(w, true);
 	}
@@ -36,16 +37,19 @@ void process_input(GLFWwindow *w) {
 	// normalize and scale to move speed
 	move_vec = scale3(unit3(move_vec), 4.0f);
 	vec3 new_vec = add_vec3(player_pos, move_vec);
-	rect player_rect = new_rect(new_vec.x, new_vec.y, 128, 256);
-	rect lady_rect = new_rect(256, 128, 128, 256);
+	sprite *player = &sc->sprites[0];
+	sprite *lady = &sc->sprites[1];
+
+	rect player_rect = get_hitbox(player);
+	rect lady_rect = get_hitbox(lady);
 	if (overlaps(player_rect, lady_rect)) {
 		vec3 initial_vec = new_vec;
 		new_vec.x = player_pos.x;
-		player_rect = new_rect(new_vec.x, new_vec.y, 128, 256);
+		player_rect = get_potential_hitbox(player, new_vec);
 		if (overlaps(player_rect, lady_rect)) {
 			new_vec = initial_vec;
 			new_vec.y = player_pos.y;
-			player_rect = new_rect(new_vec.x, new_vec.y, 128, 256);
+			player_rect = get_potential_hitbox(player, new_vec);
 			if (overlaps(player_rect, lady_rect)) {
 				return;
 			}
@@ -62,7 +66,7 @@ typedef struct index_arr {
 } index_arr;
 
 // brute force indices for a number of quads
-index_arr generate_indices(i32 quad_count) {
+elements generate_indices(i32 quad_count) {
 	size_t len = quad_count * 6;
 	size_t size = len * sizeof(u32);
 
@@ -81,7 +85,7 @@ index_arr generate_indices(i32 quad_count) {
 		indices[i*6+5] = br;
 	}
 
-	return (index_arr){
+	return (elements){
 		len,
 		size,
 		indices,
@@ -156,34 +160,30 @@ int main(void)
 	scene sc = create_scene(5);
 	sprite *player = scene_add_sprite(&sc, player_meta);
 	sprite *lady = scene_add_sprite(&sc, lady_meta);
+	lady->hitbox = new_rect(0, 128, lady->width, lady->height);
+	player->hitbox = new_rect(0, 128, player->width, player->height);
 
-	index_arr indices = generate_indices(sc.len);
+	elements indices = generate_indices(sc.len);
 
 	// generate VAO
-	u32 VAO;
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
+	u32 sprites_vao = create_vao();
 
 	// generate vertex buffer
-	u32 VBO;
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sc.len * sizeof(quad), sc.quads, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void *)0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void *)sizeof(vec3));
+	u32 sprites_vbo = create_scene_vbo(sprites_vao, sc);
 
 	// generate element buffer
-	u32 EBO;
-	glGenBuffers(1, &EBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size, indices.indices, GL_STATIC_DRAW);
+	u32 sprites_ebo = create_ebo(sprites_vao, indices, GL_DYNAMIC_DRAW);
+
+	glBindVertexArray(sprites_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, sprites_vbo);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void *)0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void *)sizeof(vec3));
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
 	// unbind VAO
 	glBindVertexArray(0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// load shaders
@@ -205,7 +205,8 @@ int main(void)
 		// update
 		delta = glfwGetTime() - last_frame;
 		last_frame = glfwGetTime();
-		process_input(window);
+		process_input(window, &sc);
+
 		// animate
 		for (i32 i = 0; i < sc.len; i++) {
 			sprite_animate(&sc.sprites[i], delta);
@@ -214,9 +215,7 @@ int main(void)
 		set_sprite_pos(player, player_pos);
 
 		// generate GPU data
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, sc.len * sizeof(quad), sc.quads, GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		update_scene_vbo(sprites_vao, sprites_vbo, sc);
 
 		// draw
 		glClearColor(0.5f, 0.3f, 0.8f, 1.0f);
@@ -225,7 +224,7 @@ int main(void)
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tex.id);
 
-		glBindVertexArray(VAO);
+		glBindVertexArray(sprites_vao);
 		glDrawElements(GL_TRIANGLES, indices.len, GL_UNSIGNED_INT, 0);
 		glfwSwapBuffers(window);
 

@@ -203,7 +203,7 @@ vec4 scale4(vec4 v, f32 s) {
 	return new_vec4(v.x * s, v.y * s, v.z * s, v.w * s);
 }
 
-bool _overlaps(rect l, rect r) {
+static bool _overlaps(rect l, rect r) {
 	bool y_overlap = (
 		(l.y >= r.y && l.y <= (r.y + r.height)) ||
 		((l.y + l.height) >= r.y && (l.y + l.height) <= (r.y + r.height))
@@ -220,6 +220,11 @@ bool _overlaps(rect l, rect r) {
 bool overlaps(rect l, rect r) {
 	// flipping the args should detect containment
 	return  _overlaps(l, r) || _overlaps(r, l);
+}
+
+void translate_rect(rect *r, vec3 v) {
+	r->x = v.x;
+	r->y = v.y;
 }
 
 void print_vec2(vec2 vec) {
