@@ -33,10 +33,26 @@ void process_input(GLFWwindow *w) {
 		move_vec.y = 1.0f;
 	}
 
-	move_vec = scale3(unit3(move_vec), 3.0f);
-	f32 old_y = player_pos.y;
-	player_pos = add_vec3(player_pos, move_vec);
-	printf("old y: %f, new y: %f\n", old_y, player_pos.y);
+	// normalize and scale to move speed
+	move_vec = scale3(unit3(move_vec), 4.0f);
+	vec3 new_vec = add_vec3(player_pos, move_vec);
+	rect player_rect = new_rect(new_vec.x, new_vec.y, 128, 256);
+	rect lady_rect = new_rect(256, 128, 128, 256);
+	if (overlaps(player_rect, lady_rect)) {
+		vec3 initial_vec = new_vec;
+		new_vec.x = player_pos.x;
+		player_rect = new_rect(new_vec.x, new_vec.y, 128, 256);
+		if (overlaps(player_rect, lady_rect)) {
+			new_vec = initial_vec;
+			new_vec.y = player_pos.y;
+			player_rect = new_rect(new_vec.x, new_vec.y, 128, 256);
+			if (overlaps(player_rect, lady_rect)) {
+				return;
+			}
+		}
+	}
+
+	player_pos = new_vec;
 }
 
 typedef struct index_arr {

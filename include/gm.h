@@ -34,15 +34,23 @@ typedef struct quad {
 	vertex br;
 } quad;
 
+typedef struct rect {
+	f32 x;
+	f32 y;
+	f32 width;
+	f32 height;
+} rect;
+
 vec2 new_vec2(float, float);
 vec3 new_vec3(float, float, float);
 vec4 new_vec4(float, float, float, float);
 vertex new_vertex(vec3 pos, vec2 tex_coord);
 quad new_quad(vertex tl, vertex tr, vertex bl, vertex br);
+rect new_rect(f32 x, f32 y, f32 width, f32 height);
 
-vec2 vec2_zero();
-vec3 vec3_zero();
-vec4 vec4_zero();
+vec2 zero2();
+vec3 zero3();
+vec4 zero4();
 
 vec3 swizzle3f2(vec2);
 vec4 swizzle4f2(vec2);
@@ -66,6 +74,8 @@ vec4 unit4(vec4 v);
 vec2 scale2(vec2 v, f32 s);
 vec3 scale3(vec3 v, f32 s);
 vec4 scale4(vec4 v, f32 s);
+
+bool overlaps(rect left, rect right);
 
 // vertex vertex_set_pos(vertex)
 

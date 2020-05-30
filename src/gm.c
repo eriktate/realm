@@ -42,14 +42,23 @@ quad new_quad(vertex tl, vertex tr, vertex bl, vertex br) {
 	};
 }
 
-vec2 vec2_zero() {
+rect new_rect(f32 x, f32 y, f32 w, f32 h) {
+	return (rect){
+		.x = x,
+		.y = y,
+		.width = w,
+		.height = h,
+	};
+}
+
+vec2 zero2() {
 	return (vec2) {
 		0.0f,
 		0.0f,
 	};
 }
 
-vec3 vec3_zero() {
+vec3 zero3() {
 	return (vec3) {
 		0.0f,
 		0.0f,
@@ -57,7 +66,7 @@ vec3 vec3_zero() {
 	};
 }
 
-vec4 vec4_zero() {
+vec4 zero4() {
 	return (vec4) {
 		0.0f,
 		0.0f,
@@ -65,10 +74,6 @@ vec4 vec4_zero() {
 		0.0f,
 	};
 }
-
-
-
-
 
 vec3 swizzle3f2(vec2 vec) {
 	return (vec3){
@@ -162,7 +167,7 @@ f32 mag4(vec4 v) {
 vec2 unit2(vec2 v) {
 	f32 mag = mag2(v);
 	if (compare_f32(mag, 0.0f)) {
-		return vec2_zero();
+		return zero2();
 	}
 
 	return new_vec2(v.x/mag, v.y/mag);
@@ -171,7 +176,7 @@ vec2 unit2(vec2 v) {
 vec3 unit3(vec3 v) {
 	f32 mag = mag3(v);
 	if (compare_f32(mag, 0.0f)) {
-		return vec3_zero();
+		return zero3();
 	}
 
 	return new_vec3(v.x/mag, v.y/mag, v.z/mag);
@@ -180,7 +185,7 @@ vec3 unit3(vec3 v) {
 vec4 unit4(vec4 v) {
 	f32 mag = mag4(v);
 	if (compare_f32(mag, 0.0f)) {
-		return vec4_zero();
+		return zero4();
 	}
 
 	return new_vec4(v.x/mag, v.y/mag, v.z/mag, v.w/mag);
@@ -196,6 +201,25 @@ vec3 scale3(vec3 v, f32 s) {
 
 vec4 scale4(vec4 v, f32 s) {
 	return new_vec4(v.x * s, v.y * s, v.z * s, v.w * s);
+}
+
+bool _overlaps(rect l, rect r) {
+	bool y_overlap = (
+		(l.y >= r.y && l.y <= (r.y + r.height)) ||
+		((l.y + l.height) >= r.y && (l.y + l.height) <= (r.y + r.height))
+	);
+
+	bool x_overlap = (
+		(l.x <= (r.x + r.width) && l.x >= r.x) ||
+		((l.x + l.width) <= (r.x + r.width) && ((l.x + l.width) >= r.x))
+	);
+
+	return y_overlap && x_overlap;
+}
+
+bool overlaps(rect l, rect r) {
+	// flipping the args should detect containment
+	return  _overlaps(l, r) || _overlaps(r, l);
 }
 
 void print_vec2(vec2 vec) {
