@@ -21,7 +21,19 @@ void process_input(GLFWwindow *w) {
 	}
 
 	if (glfwGetKey(w, GLFW_KEY_D)) {
-		player_pos = add_vec3(player_pos, new_vec3(1.0f, 0.0f, 0.0f));
+		player_pos = add_vec3(player_pos, new_vec3(3.0f, 0.0f, 0.0f));
+	}
+
+	if (glfwGetKey(w, GLFW_KEY_A)) {
+		player_pos = add_vec3(player_pos, new_vec3(-3.0f, 0.0f, 0.0f));
+	}
+
+	if (glfwGetKey(w, GLFW_KEY_W)) {
+		player_pos = add_vec3(player_pos, new_vec3(0.0f, -3.0f, 0.0f));
+	}
+
+	if (glfwGetKey(w, GLFW_KEY_S)) {
+		player_pos = add_vec3(player_pos, new_vec3(0.0f, 3.0f, 0.0f));
 	}
 }
 
@@ -111,49 +123,21 @@ int main(void)
 		return -1;
 	}
 
-	// 128x160
-	// +16x+32
-	// quad quads[] = {
-	// 	quad_new(
-	// 		// top left
-	// 		vertex_new(
-	// 			vec3_new(0.0f,  0.0f, 0.0f),
-	// 			// vec2_new(0.0f, 1.0f)
-	// 			vec2_to_texture_space(vec2_new(128.0f, 160.0f), tex.width, tex.height)
-	// 		),
-	// 		// top right
-	// 		vertex_new(
-	// 			vec3_new(64.0f, 0.0f, 0.0f),
-	// 			// vec2_new(1.0f, 1.0f)
-	// 			vec2_to_texture_space(vec2_new(144.0f, 160.0f), tex.width, tex.height)
-	// 		),
-	// 		// bottom left
-	// 		vertex_new(
-	// 			vec3_new(0.0f, 128.0f, 0.0f),
-	// 			// vec2_new(0.0f, 0.0f)
-	// 			vec2_to_texture_space(vec2_new(128.0f, 192.f), tex.width, tex.height)
-	// 		),
-	// 		// bottom right
-	// 		vertex_new(
-	// 			vec3_new(64.0f, 128.0f, 0.0f),
-	// 			// vec2_new(1.0f, 0.0f)
-	// 			vec2_to_texture_space(vec2_new(144.0f, 192.0f), tex.width, tex.height)
-	// 		)
-	// 	),
-	// };
-	atlas player_atlas = new_atlas(tex, 128, 160, 16, 32, 0, 0, 3, 3);
+	atlas sprite_atlas = new_atlas(tex, 128, 128, 16, 32, 0, 0, 3, 8);
+
+	player_pos = new_vec3(128.0f, 128.0f, 0.0f);
 	sprite player_meta = new_sprite(player_pos, 128, 256, true);
-	int player_frames[3] = {0, 1, 2};
-	player_meta.anim = new_animation(player_atlas, 6, 3, player_frames);
-	// player_meta.tex = (tex_quad){
-	// 	.tl = vec2_to_texture_space(new_vec2(128.0f, 160.0f), tex.width, tex.height),
-	// 	.tr = vec2_to_texture_space(new_vec2(144.0f, 160.0f), tex.width, tex.height),
-	// 	.bl = vec2_to_texture_space(new_vec2(128.0f, 192.0f), tex.width, tex.height),
-	// 	.br = vec2_to_texture_space(new_vec2(144.0f, 192.0f), tex.width, tex.height),
-	// };
+	sprite lady_meta = new_sprite(new_vec3(256.0f, 128.0f, 0.0f), 128, 256, true);
+
+	int player_frames[8] = {8, 9, 10, 11, 12, 13, 14, 15};
+	int lady_frames[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+
+	player_meta.anim = new_animation(sprite_atlas, 6, 3, player_frames);
+	lady_meta.anim = new_animation(sprite_atlas, 6, 3, lady_frames);
 
 	scene sc = create_scene(5);
 	sprite *player = scene_add_sprite(&sc, player_meta);
+	sprite *lady = scene_add_sprite(&sc, lady_meta);
 
 	index_arr indices = generate_indices(sc.len);
 
@@ -204,7 +188,11 @@ int main(void)
 		delta = glfwGetTime() - last_frame;
 		last_frame = glfwGetTime();
 		process_input(window);
-		sprite_animate(player, delta);
+		// animate
+		for (i32 i = 0; i < sc.len; i++) {
+			sprite_animate(&sc.sprites[i], delta);
+		}
+
 		set_sprite_pos(player, player_pos);
 
 		// generate GPU data
