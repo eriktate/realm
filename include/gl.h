@@ -2,6 +2,7 @@
 #define _GL_H
 
 #include <GL/gl3w.h>
+#include <GLFW/glfw3.h>
 #include <stdlib.h>
 #include "types.h"
 #include "game.h"
@@ -11,6 +12,8 @@ typedef struct elements {
 	size_t size;
 	u32 *data;
 } elements;
+
+GLFWwindow *create_window(u32 width, u32 height, char *title);
 
 u32 create_vao();
 u32 create_vbo(u32 vao, u32 size, void *data, GLenum usage);

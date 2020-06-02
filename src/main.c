@@ -11,69 +11,53 @@
 #include "sprite.h"
 #include "game.h"
 #include "gl.h"
+#include "input.h"
 
 const i32 WIDTH = 640;
 const i32 HEIGHT = 480;
+bool debug = true;
 vec3 player_pos;
 
-void process_input(GLFWwindow *w, scene *sc) {
+void process_input(GLFWwindow *w, scene *sc, controller *ctrl) {
+	clear_inputs(ctrl);
+
 	if (glfwGetKey(w, GLFW_KEY_ESCAPE)) {
 		glfwSetWindowShouldClose(w, true);
 	}
 
-	vec3 move_vec = new_vec3(0.0f, 0.0f, 0.0f);
+	if (glfwGetKey(w, GLFW_KEY_SEMICOLON)) {
+		debug = !debug;
+	}
+
 	if (glfwGetKey(w, GLFW_KEY_D)) {
-		move_vec.x = 1.0f;
-	} else if (glfwGetKey(w, GLFW_KEY_A)) {
-		move_vec.x = -1.0f;
+		set_input(ctrl, INPUT_RIGHT, 1);
+	}
+
+	if (glfwGetKey(w, GLFW_KEY_A)) {
+		set_input(ctrl, INPUT_LEFT, 1);
 	}
 
 	if (glfwGetKey(w, GLFW_KEY_W)) {
-		move_vec.y = -1.0f;
-	} else if (glfwGetKey(w, GLFW_KEY_S)) {
-		move_vec.y = 1.0f;
+		set_input(ctrl, INPUT_UP, 1);
 	}
 
-	// normalize and scale to move speed
-	move_vec = scale3(unit3(move_vec), 4.0f);
-	vec3 new_vec = add_vec3(player_pos, move_vec);
-	sprite *player = &sc->sprites[0];
-	sprite *lady = &sc->sprites[1];
-
-	rect player_rect = get_hitbox(player);
-	rect lady_rect = get_hitbox(lady);
-	if (overlaps(player_rect, lady_rect)) {
-		vec3 initial_vec = new_vec;
-		new_vec.x = player_pos.x;
-		player_rect = get_potential_hitbox(player, new_vec);
-		if (overlaps(player_rect, lady_rect)) {
-			new_vec = initial_vec;
-			new_vec.y = player_pos.y;
-			player_rect = get_potential_hitbox(player, new_vec);
-			if (overlaps(player_rect, lady_rect)) {
-				return;
-			}
-		}
+	if (glfwGetKey(w, GLFW_KEY_S)) {
+		set_input(ctrl, INPUT_DOWN, 1);
 	}
-
-	player_pos = new_vec;
+	f64 mouse_x, mouse_y;
+	glfwGetCursorPos(w, &mouse_x, &mouse_y);
+	ctrl->cursor_pos = new_vec2((f32)mouse_x, (f32)mouse_y);
 }
 
-typedef struct index_arr {
-	size_t len;
-	size_t size;
-	u32 *indices;
-} index_arr;
-
 // brute force indices for a number of quads
-elements generate_indices(i32 quad_count) {
+elements generate_quad_indices(i32 quad_count) {
 	size_t len = quad_count * 6;
 	size_t size = len * sizeof(u32);
 
 	u32 *indices = (u32 *)malloc(size);
 	for (i32 i = 0; i < quad_count; i++) {
 		u32 tl = i * 4;
-		u32 tr = i * 4 +1;
+		u32 tr = i * 4 + 1;
 		u32 bl = i * 4 + 2;
 		u32 br = i * 4 + 3;
 
@@ -92,14 +76,43 @@ elements generate_indices(i32 quad_count) {
 	};
 }
 
-void print_index_arr(index_arr arr) {
-	printf("[ ");
-	for (i32 i = 0; i < arr.len; i++) {
-		printf("%d, ", arr.indices[i]);
+// brute force indices for a number of rectangles
+elements generate_rect_indices(i32 rect_count) {
+	size_t len = rect_count * 8;
+	size_t size = len * sizeof(u32);
+
+	u32 *indices = (u32 *)malloc(size);
+	for (i32 i = 0; i < rect_count; i++) {
+		u32 tl = i * 4;
+		u32 tr = i * 4 + 1;
+		u32 br = i * 4 + 2;
+		u32 bl = i * 4 + 3;
+
+		indices[i*8] = tl;
+		indices[i*8+1] = tr;
+		indices[i*8+2] = tr;
+		indices[i*8+3] = br;
+		indices[i*8+4] = br;
+		indices[i*8+5] = bl;
+		indices[i*8+6] = bl;
+		indices[i*8+7] = tl;
 	}
 
-	printf(" ]\n");
+	return (elements){
+		len,
+		size,
+		indices,
+	};
 }
+
+// void print_index_arr(index_arr arr) {
+// 	printf("[ ");
+// 	for (i32 i = 0; i < arr.len; i++) {
+// 		printf("%d, ", arr.indices[i]);
+// 	}
+
+// 	printf(" ]\n");
+// }
 
 void show_fps(GLFWwindow *w, i32 fps) {
 	char title[128];
@@ -110,33 +123,7 @@ void show_fps(GLFWwindow *w, i32 fps) {
 
 int main(void)
 {
-	GLFWwindow* window;
-
-	if (!glfwInit()) {
-		printf("glfw init failed\n");
-		return -1;
-	}
-
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwSwapInterval(0); // turn off vsync if left up to the game
-	window = glfwCreateWindow(WIDTH, HEIGHT, "float - playground", NULL, NULL);
-	if (!window)
-	{
-		printf("window creation failed\n");
-		glfwTerminate();
-		return -1;
-	}
-
-	glfwMakeContextCurrent(window);
-
-	if (gl3wInit()) {
-		printf("gl3w init failed\n");
-		return -1;
-	}
-
-	glViewport(0, 0, WIDTH, HEIGHT);
+	GLFWwindow* window = create_window(640, 480, "float - playground");
 
 	// load texture
 	texture tex;
@@ -148,8 +135,8 @@ int main(void)
 	atlas sprite_atlas = new_atlas(tex, 128, 128, 16, 32, 0, 0, 3, 8);
 
 	player_pos = new_vec3(128.0f, 128.0f, 0.0f);
-	sprite player_meta = new_sprite(player_pos, 128, 256, true);
-	sprite lady_meta = new_sprite(new_vec3(256.0f, 128.0f, 0.0f), 128, 256, true);
+	sprite player_meta = new_sprite(player_pos, 16, 32, true);
+	sprite lady_meta = new_sprite(new_vec3(256.0f, 128.0f, 0.0f), 16, 32, true);
 
 	int player_frames[8] = {8, 9, 10, 11, 12, 13, 14, 15};
 	int lady_frames[8] = {0, 1, 2, 3, 4, 5, 6, 7};
@@ -160,37 +147,44 @@ int main(void)
 	scene sc = create_scene(5);
 	sprite *player = scene_add_sprite(&sc, player_meta);
 	sprite *lady = scene_add_sprite(&sc, lady_meta);
-	lady->hitbox = new_rect(0, 128, lady->width, lady->height);
-	player->hitbox = new_rect(0, 128, player->width, player->height);
+	lady->hitbox = new_rect(0, 16, lady->width, lady->height - 16);
+	player->hitbox = new_rect(0, 16, player->width, player->height - 16);
 
-	elements indices = generate_indices(sc.len);
+	elements quad_indices = generate_quad_indices(sc.len);
+	elements rect_indices = generate_rect_indices(2);
 
-	// generate VAO
+	// prep for sprite rendering
 	u32 sprites_vao = create_vao();
-
-	// generate vertex buffer
 	u32 sprites_vbo = create_scene_vbo(sprites_vao, sc);
+	u32 sprites_ebo = create_ebo(sprites_vao, quad_indices, GL_DYNAMIC_DRAW);
 
-	// generate element buffer
-	u32 sprites_ebo = create_ebo(sprites_vao, indices, GL_DYNAMIC_DRAW);
+	rect hb = get_hitbox(player);
+	// prep for geometry rendering
+	vec3 hb_data[8] = {
+		new_vec3(hb.x, hb.y, 0),
+		new_vec3(hb.x + hb.width, hb.y, 0),
+		new_vec3(hb.x + hb.width, hb.y + hb.height, 0),
+		new_vec3(hb.x, hb.y + hb.height, 0)
+	};
 
-	glBindVertexArray(sprites_vao);
-	glBindBuffer(GL_ARRAY_BUFFER, sprites_vbo);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void *)0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void *)sizeof(vec3));
+	u32 geo_vao = create_vao();
+	u32 geo_vbo = create_vbo(geo_vao, sizeof(vec3) * 4, hb_data, GL_DYNAMIC_DRAW);
+	u32 geo_ebo = create_ebo(geo_vao, rect_indices, GL_DYNAMIC_DRAW);
+	glBindVertexArray(geo_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, geo_vbo);
 
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void *)0);
 	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-
-	// unbind VAO
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// load shaders
-	u32 shader_id = load_shader_program("vert.glsl", "frag.glsl");
-	i32 uniform_window_size = glGetUniformLocation(shader_id, "window_size");
-	glUniform2f(uniform_window_size, (f32)WIDTH, (f32)HEIGHT);
-	glUniform1i(glGetUniformLocation(shader_id, "tex"), GL_TEXTURE0);
+	u32 sprite_shader = load_shader_program("shaders/sprite_vs.glsl", "shaders/sprite_fs.glsl");
+	shader_set_vec2(sprite_shader, "window_size", new_vec2(WIDTH, HEIGHT));
+	shader_set_int(sprite_shader, "tex", GL_TEXTURE0);
+
+	u32 geo_shader = load_shader_program("shaders/geo_vs.glsl", "shaders/geo_fs.glsl");
+	shader_set_vec2(geo_shader, "window_size", new_vec2(WIDTH, HEIGHT));
 
 	// alpha in texture won't work without setting the blend mode
 	glEnable(GL_BLEND);
@@ -199,13 +193,42 @@ int main(void)
 	f64 last_second = glfwGetTime();
 	i32 frames = 0;
 	f64 delta = 0;
+	controller player_ctrl = new_controller();
 
 	while (!glfwWindowShouldClose(window))
 	{
 		// update
 		delta = glfwGetTime() - last_frame;
 		last_frame = glfwGetTime();
-		process_input(window, &sc);
+		process_input(window, &sc, &player_ctrl);
+		print_vec2(player_ctrl.cursor_pos);
+		f32 move_x = get_input(&player_ctrl, INPUT_RIGHT) - get_input(&player_ctrl, INPUT_LEFT);
+		f32 move_y = get_input(&player_ctrl, INPUT_DOWN) - get_input(&player_ctrl, INPUT_UP);
+
+		vec3 move_vec = new_vec3(move_x, move_y, 0);
+
+		// normalize and scale to move speed
+		move_vec = scale3(unit3(move_vec), 2.0f);
+		vec3 new_vec = add_vec3(player_pos, move_vec);
+
+		rect player_rect = get_potential_hitbox(player, new_vec);
+		rect lady_rect = get_hitbox(lady);
+		if (overlaps(player_rect, lady_rect)) {
+			vec3 initial_vec = new_vec;
+			new_vec.x = player_pos.x;
+			player_rect = get_potential_hitbox(player, new_vec);
+			if (overlaps(player_rect, lady_rect)) {
+				new_vec = initial_vec;
+				new_vec.y = player_pos.y;
+				player_rect = get_potential_hitbox(player, new_vec);
+				if (overlaps(player_rect, lady_rect)) {
+					new_vec.x = 0;
+					new_vec.y = 0;
+				}
+			}
+		}
+
+		player_pos = new_vec;
 
 		// animate
 		for (i32 i = 0; i < sc.len; i++) {
@@ -216,18 +239,43 @@ int main(void)
 
 		// generate GPU data
 		update_scene_vbo(sprites_vao, sprites_vbo, sc);
+		rect hb = get_hitbox(player);
+		// player hb
+		hb_data[0] = new_vec3(hb.x, hb.y, 0);
+		hb_data[1] = new_vec3(hb.x + hb.width, hb.y, 0);
+		hb_data[2] = new_vec3(hb.x + hb.width, hb.y + hb.height, 0);
+		hb_data[3] = new_vec3(hb.x, hb.y + hb.height, 0);
+
+		// mouse hb
+		i32 cursor_x = ((i32)(player_ctrl.cursor_pos.x / 16)) * 16;
+		i32 cursor_y = ((i32)(player_ctrl.cursor_pos.y / 16)) * 16;
+
+		hb_data[4] = new_vec3(cursor_x, cursor_y, 0);
+		hb_data[5] = new_vec3(cursor_x + 16, cursor_y, 0);
+		hb_data[6] = new_vec3(cursor_x + 16, cursor_y + 16, 0);
+		hb_data[7] = new_vec3(cursor_x, cursor_y + 16, 0);
+
+		update_vbo(geo_vao, geo_vbo, sizeof(vec3) * 8, hb_data, GL_DYNAMIC_DRAW);
 
 		// draw
 		glClearColor(0.5f, 0.3f, 0.8f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		// draw sprites
+		glUseProgram(sprite_shader);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tex.id);
-
 		glBindVertexArray(sprites_vao);
-		glDrawElements(GL_TRIANGLES, indices.len, GL_UNSIGNED_INT, 0);
-		glfwSwapBuffers(window);
+		glDrawElements(GL_TRIANGLES, quad_indices.len, GL_UNSIGNED_INT, 0);
 
+		// draw geometry
+		if (debug) {
+			glUseProgram(geo_shader);
+			glBindVertexArray(geo_vao);
+			glDrawElements(GL_LINES, rect_indices.len, GL_UNSIGNED_INT, 0);
+		}
+
+		glfwSwapBuffers(window);
 		glfwPollEvents();
 		frames++;
 		if (glfwGetTime() - last_second > 1.0) {

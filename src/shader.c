@@ -2,16 +2,18 @@
 #include <stdlib.h>
 #include <GL/gl3w.h>
 #include "file.h"
+#include "shader.h"
 
 unsigned int load_shader_program(char *vert_name , char *frag_name) {
 	char *vert_source = read_file(vert_name);
 	char *frag_source = read_file(frag_name);
 
-	unsigned int vert_shader = glCreateShader(GL_VERTEX_SHADER);
+	glUseProgram(0);
+	u32 vert_shader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vert_shader, 1, (const char *const *)&vert_source, NULL);
 	glCompileShader(vert_shader);
 
-	int success;
+	i32 success;
 	char info_log[512];
 	glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &success);
 
@@ -20,7 +22,7 @@ unsigned int load_shader_program(char *vert_name , char *frag_name) {
 		printf("vertex shader compilation failed: %s\n", info_log);
 	}
 
-	unsigned int frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
+	u32 frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(frag_shader, 1, (const char *const *)&frag_source, NULL);
 	glCompileShader(frag_shader);
 	glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &success);
@@ -30,7 +32,7 @@ unsigned int load_shader_program(char *vert_name , char *frag_name) {
 		printf("fragment shader compilation failed: %s\n", info_log);
 	}
 
-	unsigned int program_id = glCreateProgram();
+	u32 program_id = glCreateProgram();
 	glAttachShader(program_id, vert_shader);
 	glAttachShader(program_id, frag_shader);
 	glLinkProgram(program_id);
@@ -49,4 +51,14 @@ unsigned int load_shader_program(char *vert_name , char *frag_name) {
 	free(frag_source);
 
 	return program_id;
+}
+
+void shader_set_vec2(u32 shader_id, char *uniform, vec2 val) {
+	i32 location = glGetUniformLocation(shader_id, uniform);
+	glUniform2f(location, val.x, val.y);
+}
+
+void shader_set_int(u32 shader_id, char *uniform, i32 val) {
+	i32 location = glGetUniformLocation(shader_id, uniform);
+	glUniform1i(location, val);
 }
