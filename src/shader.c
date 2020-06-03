@@ -55,10 +55,15 @@ unsigned int load_shader_program(char *vert_name , char *frag_name) {
 
 void shader_set_vec2(u32 shader_id, char *uniform, vec2 val) {
 	i32 location = glGetUniformLocation(shader_id, uniform);
-	glUniform2f(location, val.x, val.y);
+	glProgramUniform2f(shader_id, location, val.x, val.y);
 }
 
 void shader_set_int(u32 shader_id, char *uniform, i32 val) {
 	i32 location = glGetUniformLocation(shader_id, uniform);
-	glUniform1i(location, val);
+	glProgramUniform1i(shader_id, location, val);
+}
+
+void shader_set_mat4(u32 shader_id, char *uniform, mat4 val) {
+	i32 location = glGetUniformLocation(shader_id, uniform);
+	glProgramUniformMatrix4fv(shader_id, location, 1, GL_FALSE, val.data);
 }

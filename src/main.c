@@ -13,9 +13,11 @@
 #include "gl.h"
 #include "input.h"
 
-const i32 WIDTH = 640;
-const i32 HEIGHT = 480;
-bool debug = true;
+const i32 WIDTH = 1280;
+const i32 HEIGHT = 960;
+// const i32 WIDTH = 640;
+// const i32 HEIGHT = 480;
+bool debug = false;
 vec3 player_pos;
 
 void process_input(GLFWwindow *w, scene *sc, controller *ctrl) {
@@ -44,6 +46,7 @@ void process_input(GLFWwindow *w, scene *sc, controller *ctrl) {
 	if (glfwGetKey(w, GLFW_KEY_S)) {
 		set_input(ctrl, INPUT_DOWN, 1);
 	}
+
 	f64 mouse_x, mouse_y;
 	glfwGetCursorPos(w, &mouse_x, &mouse_y);
 	ctrl->cursor_pos = new_vec2((f32)mouse_x, (f32)mouse_y);
@@ -123,7 +126,7 @@ void show_fps(GLFWwindow *w, i32 fps) {
 
 int main(void)
 {
-	GLFWwindow* window = create_window(640, 480, "float - playground");
+	GLFWwindow* window = create_window(WIDTH, HEIGHT, "float - playground");
 
 	// load texture
 	texture tex;
@@ -134,7 +137,7 @@ int main(void)
 
 	atlas sprite_atlas = new_atlas(tex, 128, 128, 16, 32, 0, 0, 3, 8);
 
-	player_pos = new_vec3(128.0f, 128.0f, 0.0f);
+	player_pos = new_vec3(320.0f, 240.0f, 0.0f);
 	sprite player_meta = new_sprite(player_pos, 16, 32, true);
 	sprite lady_meta = new_sprite(new_vec3(256.0f, 128.0f, 0.0f), 16, 32, true);
 
@@ -178,6 +181,9 @@ int main(void)
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+	// mat4 projection = ortho_proj(0.0, -1.0, 1.0, 0.0, 1, -1);
+	// mat4 projection = ortho_proj(0.5, -0.5, 0.5, -0.5, 1, -1);
+	mat4 projection = ortho_proj(0, 640, 0, 480, 1, -1);
 	// load shaders
 	u32 sprite_shader = load_shader_program("shaders/sprite_vs.glsl", "shaders/sprite_fs.glsl");
 	shader_set_vec2(sprite_shader, "window_size", new_vec2(WIDTH, HEIGHT));
@@ -201,7 +207,6 @@ int main(void)
 		delta = glfwGetTime() - last_frame;
 		last_frame = glfwGetTime();
 		process_input(window, &sc, &player_ctrl);
-		print_vec2(player_ctrl.cursor_pos);
 		f32 move_x = get_input(&player_ctrl, INPUT_RIGHT) - get_input(&player_ctrl, INPUT_LEFT);
 		f32 move_y = get_input(&player_ctrl, INPUT_DOWN) - get_input(&player_ctrl, INPUT_UP);
 
@@ -229,6 +234,12 @@ int main(void)
 		}
 
 		player_pos = new_vec;
+		mat4 view = translation(new_vec3(320 - player_pos.x, 240 - player_pos.y, 0));
+		mat4 transform = mult_mat4(projection, view);
+
+		shader_set_mat4(sprite_shader, "transform", transform);
+		shader_set_vec2(sprite_shader, "camera_offset", new_vec2(320-player_pos.x, 0));
+		shader_set_mat4(geo_shader, "transform", transform);
 
 		// animate
 		for (i32 i = 0; i < sc.len; i++) {
