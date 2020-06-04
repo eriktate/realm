@@ -12,11 +12,10 @@
 #include "game.h"
 #include "gl.h"
 #include "input.h"
+#include "camera.h"
 
 const i32 WIDTH = 1280;
 const i32 HEIGHT = 960;
-// const i32 WIDTH = 640;
-// const i32 HEIGHT = 480;
 bool debug = false;
 vec3 player_pos;
 
@@ -183,7 +182,7 @@ int main(void)
 
 	// mat4 projection = ortho_proj(0.0, -1.0, 1.0, 0.0, 1, -1);
 	// mat4 projection = ortho_proj(0.5, -0.5, 0.5, -0.5, 1, -1);
-	mat4 projection = ortho_proj(0, 640, 0, 480, 1, -1);
+	mat4 projection = ortho_proj(0, WIDTH/2, 0, HEIGHT/2, 1, -1);
 	// load shaders
 	u32 sprite_shader = load_shader_program("shaders/sprite_vs.glsl", "shaders/sprite_fs.glsl");
 	shader_set_vec2(sprite_shader, "window_size", new_vec2(WIDTH, HEIGHT));
@@ -201,6 +200,8 @@ int main(void)
 	f64 delta = 0;
 	controller player_ctrl = new_controller();
 
+
+	camera cam = new_camera(player_pos, WIDTH/2, HEIGHT/2, 128, 128);
 	while (!glfwWindowShouldClose(window))
 	{
 		// update
@@ -234,11 +235,12 @@ int main(void)
 		}
 
 		player_pos = new_vec;
-		mat4 view = translation(new_vec3(320 - player_pos.x, 240 - player_pos.y, 0));
-		mat4 transform = mult_mat4(projection, view);
+
+		// get updated camera stuff
+		look_at(&cam, player_pos);
+		mat4 transform = get_camera_transform(&cam);
 
 		shader_set_mat4(sprite_shader, "transform", transform);
-		shader_set_vec2(sprite_shader, "camera_offset", new_vec2(320-player_pos.x, 0));
 		shader_set_mat4(geo_shader, "transform", transform);
 
 		// animate

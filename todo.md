@@ -6,4 +6,5 @@
 - DONE! Build input manager that can capture input state and be tied into from anywhere.
 - DONE! Orthographic projection matrix with 2x zoom
 - DONE! Add simple centered camera
+- Let character move a little before moving the camera.
 - Add environments (new texture atlas and more collision checks)
