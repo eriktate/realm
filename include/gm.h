@@ -66,7 +66,6 @@ vec4 swizzle4f3(vec3);
 vec3 add_vec3(vec3, vec3);
 vec3 sub_vec3(vec3, vec3);
 
-vec2 vec2_to_clip_space(vec2, f32, f32);
 vec2 vec2_to_texture_space(vec2, f32, f32);
 
 bool compare_f32(f32 left, f32 right);

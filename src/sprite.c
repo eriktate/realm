@@ -9,7 +9,6 @@ tex_quad get_current_frame(animation *anim) {
 }
 
 quad get_quad_from_sprite(sprite *spr) {
-	printf("Get quad from sprite\n");
 	vec3 pos = spr->pos;
 	tex_quad frame;
 	if (spr->animated) {

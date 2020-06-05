@@ -8,7 +8,7 @@
 typedef struct scene {
 	quad *quads;
 	sprite *sprites;
-	size_t capacity;
+	size_t capacity;;
 	size_t len;
 } scene;
 

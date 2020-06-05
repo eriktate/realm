@@ -43,13 +43,10 @@ scene create_scene(size_t cap) {
 
 sprite *scene_add_sprite(scene *sc, sprite spr) {
 	spr.id = sc->len;
-	printf("Assigning sprite\n");
 	sc->sprites[sc->len] = spr;
-	printf("Assigning quad\n");
 	sc->quads[sc->len] = get_quad_from_sprite(&spr);
 	sc->len++;
 
-	printf("Getting added sprite\n");
 	sprite *added = &(sc->sprites[(sc->len)-1]);
 	added->_quad = &(sc->quads[sc->len-1]);
 	grow_capacity(sc);

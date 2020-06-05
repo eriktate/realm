@@ -16,10 +16,10 @@
 
 const i32 WIDTH = 1280;
 const i32 HEIGHT = 960;
-bool debug = false;
+bool debug = true;
 vec3 player_pos;
 
-void process_input(GLFWwindow *w, scene *sc, controller *ctrl) {
+void process_input(GLFWwindow *w, controller *ctrl) {
 	clear_inputs(ctrl);
 
 	if (glfwGetKey(w, GLFW_KEY_ESCAPE)) {
@@ -27,28 +27,30 @@ void process_input(GLFWwindow *w, scene *sc, controller *ctrl) {
 	}
 
 	if (glfwGetKey(w, GLFW_KEY_SEMICOLON)) {
-		debug = !debug;
+		set_input(ctrl, INPUT_TYPE_DEBUG, 1);
 	}
 
 	if (glfwGetKey(w, GLFW_KEY_D)) {
-		set_input(ctrl, INPUT_RIGHT, 1);
+		set_input(ctrl, INPUT_TYPE_RIGHT, 1);
 	}
 
 	if (glfwGetKey(w, GLFW_KEY_A)) {
-		set_input(ctrl, INPUT_LEFT, 1);
+		set_input(ctrl, INPUT_TYPE_LEFT, 1);
 	}
 
 	if (glfwGetKey(w, GLFW_KEY_W)) {
-		set_input(ctrl, INPUT_UP, 1);
+		set_input(ctrl, INPUT_TYPE_UP, 1);
 	}
 
 	if (glfwGetKey(w, GLFW_KEY_S)) {
-		set_input(ctrl, INPUT_DOWN, 1);
+		set_input(ctrl, INPUT_TYPE_DOWN, 1);
 	}
 
 	f64 mouse_x, mouse_y;
 	glfwGetCursorPos(w, &mouse_x, &mouse_y);
 	ctrl->cursor_pos = new_vec2((f32)mouse_x, (f32)mouse_y);
+
+	finalize_inputs(ctrl);
 }
 
 // brute force indices for a number of quads
@@ -107,20 +109,16 @@ elements generate_rect_indices(i32 rect_count) {
 	};
 }
 
-// void print_index_arr(index_arr arr) {
-// 	printf("[ ");
-// 	for (i32 i = 0; i < arr.len; i++) {
-// 		printf("%d, ", arr.indices[i]);
-// 	}
-
-// 	printf(" ]\n");
-// }
-
 void show_fps(GLFWwindow *w, i32 fps) {
 	char title[128];
 
 	sprintf(title, "Playground: %d", fps);
 	glfwSetWindowTitle(w, title);
+}
+
+i32 random_i32(f64 seed, i32 lower, i32 upper) {
+	srand((u32)seed);
+	return lower + (rand() % (upper - lower));
 }
 
 int main(void)
@@ -134,7 +132,24 @@ int main(void)
 		return -1;
 	}
 
+	scene sc = create_scene(5000);
+
 	atlas sprite_atlas = new_atlas(tex, 128, 128, 16, 32, 0, 0, 3, 8);
+	atlas tile_atlas = new_atlas(tex, 0, 0, 16, 16, 0, 0, 12, 7);
+
+	for (i32 i = 0; i < 32; i++) {
+		for (i32 j = 0; j < 32; j++) {
+			sprite tile = new_sprite(
+				new_vec3(256 + (j * 16), 128 + (i * 16), 0),
+				16,
+				16,
+				false
+			);
+			i32 frame_idx = random_i32(glfwGetTime() + (i * j), 29, 31);
+			tile.tex = tile_atlas.frames[frame_idx];
+			scene_add_sprite(&sc, tile);
+		}
+	}
 
 	player_pos = new_vec3(320.0f, 240.0f, 0.0f);
 	sprite player_meta = new_sprite(player_pos, 16, 32, true);
@@ -146,7 +161,6 @@ int main(void)
 	player_meta.anim = new_animation(sprite_atlas, 6, 3, player_frames);
 	lady_meta.anim = new_animation(sprite_atlas, 6, 3, lady_frames);
 
-	scene sc = create_scene(5);
 	sprite *player = scene_add_sprite(&sc, player_meta);
 	sprite *lady = scene_add_sprite(&sc, lady_meta);
 	lady->hitbox = new_rect(0, 16, lady->width, lady->height - 16);
@@ -180,9 +194,6 @@ int main(void)
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// mat4 projection = ortho_proj(0.0, -1.0, 1.0, 0.0, 1, -1);
-	// mat4 projection = ortho_proj(0.5, -0.5, 0.5, -0.5, 1, -1);
-	mat4 projection = ortho_proj(0, WIDTH/2, 0, HEIGHT/2, 1, -1);
 	// load shaders
 	u32 sprite_shader = load_shader_program("shaders/sprite_vs.glsl", "shaders/sprite_fs.glsl");
 	shader_set_vec2(sprite_shader, "window_size", new_vec2(WIDTH, HEIGHT));
@@ -207,9 +218,9 @@ int main(void)
 		// update
 		delta = glfwGetTime() - last_frame;
 		last_frame = glfwGetTime();
-		process_input(window, &sc, &player_ctrl);
-		f32 move_x = get_input(&player_ctrl, INPUT_RIGHT) - get_input(&player_ctrl, INPUT_LEFT);
-		f32 move_y = get_input(&player_ctrl, INPUT_DOWN) - get_input(&player_ctrl, INPUT_UP);
+		process_input(window, &player_ctrl);
+		f32 move_x = get_input(&player_ctrl, INPUT_TYPE_RIGHT) - get_input(&player_ctrl, INPUT_TYPE_LEFT);
+		f32 move_y = get_input(&player_ctrl, INPUT_TYPE_DOWN) - get_input(&player_ctrl, INPUT_TYPE_UP);
 
 		vec3 move_vec = new_vec3(move_x, move_y, 0);
 
@@ -271,7 +282,7 @@ int main(void)
 		update_vbo(geo_vao, geo_vbo, sizeof(vec3) * 8, hb_data, GL_DYNAMIC_DRAW);
 
 		// draw
-		glClearColor(0.5f, 0.3f, 0.8f, 1.0f);
+		glClearColor(0.5f, 0.8f, 0.5f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// draw sprites
@@ -280,6 +291,10 @@ int main(void)
 		glBindTexture(GL_TEXTURE_2D, tex.id);
 		glBindVertexArray(sprites_vao);
 		glDrawElements(GL_TRIANGLES, quad_indices.len, GL_UNSIGNED_INT, 0);
+
+		if (get_input_pressed(&player_ctrl, INPUT_TYPE_DEBUG)) {
+			debug = !debug;
+		}
 
 		// draw geometry
 		if (debug) {

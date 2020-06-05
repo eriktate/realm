@@ -2,9 +2,6 @@
 #include <math.h>
 #include "gm.h"
 
-static f32 x_to_clip_space(f32 x, f32 w);
-static f32 y_to_clip_space(f32 x, f32 h);
-
 vec2 new_vec2(f32 x, f32 y) {
 	return (vec2) {
 		x,
@@ -66,22 +63,6 @@ mat4 identity() {
 }
 
 mat4 ortho_proj(f32 l, f32 r, f32 t, f32 b, f32 f, f32 n) {
-	return (mat4){
-		.data = {
-			2/(r-l),      0,            0,            0,
-			0,            2/(t-b),      0,            0,
-			0,            0,            -2/(f-n),     0,
-			-(r+l)/(r-l), -(t+b)/(t-b), -(f+n)/(f-n), 1,
-		}
-	};
-}
-
-mat4 ortho_screen_proj(f32 r, f32 l, f32 t, f32 b, f32 f, f32 n, i32 w, i32 h) {
-	r = x_to_clip_space(r, w);
-	l = x_to_clip_space(l, w);
-	t = y_to_clip_space(t, h);
-	b = y_to_clip_space(b, h);
-
 	return (mat4){
 		.data = {
 			2/(r-l),      0,            0,            0,
@@ -164,29 +145,6 @@ static f32 y_to_texture_space(f32 y, f32 height) {
 
 static f32 x_to_texture_space(f32 x, f32 width) {
 	return x/width;
-}
-
-static f32 x_to_clip_space(f32 x, f32 width) {
-	return (x * (2/width)) - 1;
-}
-
-static f32 y_to_clip_space(f32 y, f32 height) {
-	return -((y * (2/height)) - 1); // invert for y
-}
-
-static f32 x_to_screen_space(f32 x, f32 width) {
-	return (2 * (x/width)) - 1;
-}
-
-static f32 y_to_screen_space(f32 y, f32 height) {
-	return -((2 * (y/height)) - 1); // invert for y
-}
-
-vec2 vec2_to_clip_space(vec2 v, f32 width, f32 height) {
-	v.x = x_to_clip_space(v.x, width);
-	v.y = y_to_clip_space(v.y, height);
-
-	return v;
 }
 
 vec2 vec2_to_texture_space(vec2 v, f32 width, f32 height) {
