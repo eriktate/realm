@@ -10,6 +10,7 @@
 - Clean up main.c and make it less crazy
 - DONE! Add pressed and released detection to controller.
 - Add environments (new texture atlas and more collision checks)
+- Integrate Janet
 
 # BUGS
 - Scene grow currently fails.
