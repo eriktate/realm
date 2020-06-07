@@ -47,6 +47,19 @@ impl Vec2 {
     pub fn zero() -> Vec2 {
         Vec2 { x: 0.0, y: 0.0 }
     }
+
+    pub fn mag(&self) -> f32 {
+        (self.x.powi(2) + self.x.powi(2)).sqrt()
+    }
+
+    pub fn unit(&self) -> Vec2 {
+        let mag = self.mag();
+        if f32_eq(mag, 0.0) {
+            return Vec2::zero();
+        }
+
+        Vec2::new(self.x / mag, self.y / mag)
+    }
 }
 
 impl Vec3 {
@@ -60,6 +73,19 @@ impl Vec3 {
             y: 0.0,
             z: 0.0,
         }
+    }
+
+    pub fn mag(&self) -> f32 {
+        (self.x.powi(2) + self.x.powi(2) + self.z.powi(2)).sqrt()
+    }
+
+    pub fn unit(&self) -> Vec3 {
+        let mag = self.mag();
+        if f32_eq(mag, 0.0) {
+            return Vec3::zero();
+        }
+
+        Vec3::new(self.x / mag, self.y / mag, self.z / mag)
     }
 }
 
@@ -197,4 +223,8 @@ impl From<&Vec3> for Vec4 {
     fn from(v: &Vec3) -> Vec4 {
         Vec4::new(v.x, v.y, v.z, 0.0)
     }
+}
+
+fn f32_eq(lhs: f32, rhs: f32) -> bool {
+    (lhs - rhs) < 0.0000001
 }
