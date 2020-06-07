@@ -1,4 +1,3 @@
-use gl::types::GLenum;
 use glfw::Glfw;
 use std::ffi::CString;
 
@@ -42,29 +41,30 @@ pub fn bind_vertex_array(id: u32) {
     }
 }
 
-fn bind_buffer(kind: GLenum, id: u32) {
+pub fn bind_array_buffer(id: u32) {
     unsafe {
-        gl::BindBuffer(kind, id);
+        gl::BindBuffer(gl::ARRAY_BUFFER, id);
     }
 }
 
-pub fn create_vbo<T>(vao: u32, data: Vec<T>) -> u32 {
+pub fn create_vbo<T>(data: &Vec<T>) -> u32 {
     let usage = gl::DYNAMIC_DRAW;
     let mut id: u32 = 0;
 
-    bind_vertex_array(vao);
     unsafe { gl::GenBuffers(1, &mut id) };
-    bind_buffer(gl::ARRAY_BUFFER, id);
+    bind_array_buffer(id);
 
-    let size = data.capacity() * std::mem::size_of::<T>();
-    let ptr = data.as_ptr();
+    let size = data.len() * std::mem::size_of::<T>();
+    let ptr = data.as_ptr() as *const std::ffi::c_void;
+
+    // let size = 9 * 4;
+    // let data: [f32; 9] = [0.0, -0.5, 0.0, 0.5, -0.5, 0.0, -0.5, 0.5, 0.0];
     unsafe {
-        let ptr = ptr as *const std::ffi::c_void;
+        // let ptr = data.as_ptr() as *const std::ffi::c_void;
         gl::BufferData(gl::ARRAY_BUFFER, size as isize, ptr, usage);
     };
 
-    bind_vertex_array(0);
-    bind_buffer(gl::ARRAY_BUFFER, 0);
+    bind_array_buffer(0);
 
     id
 }
@@ -101,7 +101,6 @@ pub fn compile_shader(id: u32) -> Result<(), String> {
     let mut log_size: i32 = 0;
     unsafe { gl::GetShaderiv(id, gl::COMPILE_STATUS, &mut success) }
 
-    println!("Success val: {}", success);
     if success == 0 {
         unsafe {
             gl::GetShaderInfoLog(id, 512, &mut log_size, info_log.as_mut_ptr() as *mut i8);
@@ -153,4 +152,23 @@ pub fn clear(mask: u32) {
 
 pub fn draw_arrays(mode: DrawMode, first: i32, count: i32) {
     unsafe { gl::DrawArrays(mode as u32, first, count) }
+}
+
+// TODO (etate): Support more than GL_FLOAT
+pub fn vertex_attrib_pointer(index: u32, size: usize, normalized: bool, stride: u32, offset: u32) {
+    let norm = if normalized { gl::TRUE } else { gl::FALSE };
+    unsafe {
+        gl::VertexAttribPointer(
+            index,
+            size as i32,
+            gl::FLOAT,
+            norm,
+            stride as i32,
+            offset as *const std::ffi::c_void,
+        )
+    }
+}
+
+pub fn enable_vertex_attrib_array(index: u32) {
+    unsafe { gl::EnableVertexAttribArray(index) }
 }
