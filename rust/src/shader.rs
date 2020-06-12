@@ -1,4 +1,5 @@
 use crate::gl;
+use crate::gm;
 
 // A Shader
 pub struct Shader {
@@ -7,18 +8,13 @@ pub struct Shader {
 
 impl Shader {
     pub fn new(vert_src: &str, frag_src: &str) -> Result<Shader, String> {
-        println!("Clearing program!");
         gl::use_program(0);
-        println!("Creating shaders!");
         let vert_id = gl::create_shader(gl::ShaderType::VertexShader);
         let frag_id = gl::create_shader(gl::ShaderType::FragmentShader);
 
-        println!("Loading shader sources!");
         gl::shader_source(vert_id, vert_src);
-        println!("Loading shader sources!");
         gl::shader_source(frag_id, frag_src);
 
-        println!("Compiling shaders!");
         gl::compile_shader(vert_id)?;
         gl::compile_shader(frag_id)?;
 
@@ -34,11 +30,31 @@ impl Shader {
         Ok(Shader { id: program_id })
     }
 
+    // load shaders from file system
+    // pub fn load(vert_fname: &str, frag_fname: &str) -> Result<Shader, String> {
+    // }
+
     pub fn use_program(&self) {
         gl::use_program(self.id);
     }
 
-    // load shaders from file system
-    // pub fn load(vert_fname: &str, frag_fname: &str) -> Result<Shader, String> {
-    // }
+    pub fn set_vec2(&self, uniform: &str, vec: gm::Vec2) {
+        let loc = gl::get_uniform_location(self.id, uniform);
+        gl::program_uniform2f(self.id, loc, vec.x, vec.y);
+    }
+
+    pub fn set_i32(&self, uniform: &str, val: i32) {
+        let loc = gl::get_uniform_location(self.id, uniform);
+        gl::program_uniform1i(self.id, loc, val);
+    }
+
+    pub fn set_u32(&self, uniform: &str, val: u32) {
+        let loc = gl::get_uniform_location(self.id, uniform);
+        gl::program_uniform1u(self.id, loc, val);
+    }
+
+    pub fn set_mat4(&self, uniform: &str, mat: gm::Mat4) {
+        let loc = gl::get_uniform_location(self.id, uniform);
+        gl::program_uniform_matrix4fv(self.id, loc, mat.data);
+    }
 }

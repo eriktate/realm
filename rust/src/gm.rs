@@ -1,42 +1,42 @@
 pub struct Vec2 {
-    x: f32,
-    y: f32,
+    pub x: f32,
+    pub y: f32,
 }
 
 pub struct Vec3 {
-    x: f32,
-    y: f32,
-    z: f32,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
 }
 
 pub struct Vec4 {
-    x: f32,
-    y: f32,
-    z: f32,
-    w: f32,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub w: f32,
 }
 
 // Mat4 is stored in column major format.
 pub struct Mat4 {
-    data: [f32; 16],
+    pub data: [f32; 16],
 }
 
 pub struct Rect {
-    pos: Vec2,
-    w: f32,
-    h: f32,
+    pub pos: Vec2,
+    pub w: f32,
+    pub h: f32,
 }
 
 pub struct Vertex {
-    pos: Vec3,
-    tex_coord: Vec2,
+    pub pos: Vec3,
+    pub tex_coord: Vec2,
 }
 
 pub struct Quad {
-    tl: Vertex,
-    tr: Vertex,
-    bl: Vertex,
-    br: Vertex,
+    pub tl: Vertex,
+    pub tr: Vertex,
+    pub bl: Vertex,
+    pub br: Vertex,
 }
 
 impl Vec2 {
@@ -191,6 +191,37 @@ impl Rect {
         // flipping arguments captures containment
         overlaps(&self, other) || overlaps(other, &self)
     }
+}
+
+impl Quad {
+    pub fn new(tl: Vertex, tr: Vertex, bl: Vertex, br: Vertex) -> Quad {
+        Quad { tl, tr, bl, br }
+    }
+}
+
+pub fn make_indices(quads: &Vec<Quad>) -> Vec<u32> {
+    let mut indices: Vec<u32> = Vec::with_capacity(quads.len() * 6);
+    for i in 0..quads.len() {
+        let tl = i * 4;
+        let tr = i * 4 + 1;
+        let bl = i * 4 + 2;
+        let br = i * 4 + 3;
+
+        // indices[i * 6] = tl as u32;
+        // indices[i * 6 + 1] = tr as u32;
+        // indices[i * 6 + 2] = bl as u32;
+        // indices[i * 6 + 3] = tr as u32;
+        // indices[i * 6 + 4] = bl as u32;
+        // indices[i * 6 + 5] = br as u32;
+        indices.push(tl as u32);
+        indices.push(tr as u32);
+        indices.push(bl as u32);
+        indices.push(tr as u32);
+        indices.push(bl as u32);
+        indices.push(br as u32);
+    }
+
+    indices
 }
 
 // determine if a rectangle overlaps another rectangle
