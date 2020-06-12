@@ -2,6 +2,7 @@ use crate::gl::{
     bind_texture, gen_textures, tex_image, tex_parameteri, TextureFormat, TextureParameter,
     TextureType, TextureValue,
 };
+use crate::gm::Vec2;
 use image::open;
 
 pub struct Texture {
@@ -62,5 +63,12 @@ impl Texture {
 
         bind_texture(TextureType::Tex2D, 0);
         tex
+    }
+
+    pub fn coord(&self, src: Vec2) -> Vec2 {
+        Vec2::new(
+            src.x / self.width as f32,
+            1 as f32 - (src.y / self.height as f32),
+        )
     }
 }
