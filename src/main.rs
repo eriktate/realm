@@ -31,7 +31,7 @@ fn main() {
     gl::viewport(0, 0, WIDTH, HEIGHT);
 
     // load texture
-    let tex = Texture::load("../spritesheet.png");
+    let tex = Texture::load("spritesheet.png");
 
     // load shaders
     let vert_src = include_str!("../vert_shader.glsl");
