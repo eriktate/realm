@@ -126,6 +126,21 @@ pub fn create_vbo<T>(data: &Vec<T>) -> u32 {
     id
 }
 
+pub fn update_vbo<T>(id: u32, data: &Vec<T>) {
+    let usage = gl::DYNAMIC_DRAW;
+    bind_vbo(id);
+
+    let size = data.len() * std::mem::size_of::<T>();
+    let ptr = data.as_ptr() as *const std::ffi::c_void;
+
+    // let size = 9 * 4;
+    // let data: [f32; 9] = [0.0, -0.5, 0.0, 0.5, -0.5, 0.0, -0.5, 0.5, 0.0];
+    unsafe {
+        // let ptr = data.as_ptr() as *const std::ffi::c_void;
+        gl::BufferData(gl::ARRAY_BUFFER, size as isize, ptr, usage);
+    };
+}
+
 pub fn create_ebo(indices: &Vec<u32>) -> u32 {
     let usage = gl::DYNAMIC_DRAW;
     let mut id: u32 = 0;

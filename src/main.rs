@@ -8,7 +8,7 @@ mod texture;
 
 use gm::{Vec2, Vec3, Vertex};
 use sprite::{Show, Sprite};
-use texture::{TexQuad, Texture};
+use texture::Texture;
 
 const WIDTH: u32 = 1280;
 const HEIGHT: u32 = 960;
@@ -32,13 +32,14 @@ fn main() {
     gl::init(&glfw);
     gl::viewport(0, 0, WIDTH, HEIGHT);
 
-    // load texture
+    // do texture things
     let tex = Texture::load("spritesheet.png");
+    let atlas = texture::Atlas::new(tex, 128, 192, 16, 32, 0, 0, 1, 4);
+    let anim = sprite::Animation::new(&atlas, 4.0, vec![0, 1, 2, 3]);
 
     // make sprite
     let tex_quad = tex.tex_quad(128, 192, 16, 32);
-    println!("Sprite tex quad: {:?}", tex_quad);
-    let spr = Sprite::new(0, Vec3::new(0.0, 0.0, 0.0), 16, 32, Show::Tex(tex_quad));
+    let mut spr = Sprite::new(0, Vec3::new(0.0, 0.0, 0.0), 16, 32, Show::Anim(anim));
 
     // load shaders
     let vert_src = include_str!("../shaders/sprite_vs.glsl");
@@ -46,7 +47,7 @@ fn main() {
     let shader_program = shader::Shader::new(vert_src, frag_src).unwrap();
     shader_program.set_u32("tex", gl::Textures::Tex0 as u32);
 
-    let quads = vec![spr.to_quad()];
+    let mut quads = vec![spr.to_quad()];
 
     let indices = gm::make_indices(&quads);
     println!("{:?}", indices);
@@ -78,8 +79,17 @@ fn main() {
 
     let projection = gm::Mat4::ortho(0.0, (WIDTH / 2) as f32, 0.0, (HEIGHT / 2) as f32, 1.0, -1.0);
     shader_program.set_mat4("transform", projection);
+    let mut time_last_frame = glfw.get_time() as f32;
     while !window.should_close() {
         glfw.poll_events();
+        let current_time = glfw.get_time() as f32;
+        let elapsed_time = current_time - time_last_frame;
+        time_last_frame = current_time;
+
+        spr.tick(elapsed_time);
+        quads[0] = spr.to_quad();
+
+        gl::update_vbo(vbo, &quads);
         for (_, event) in glfw::flush_messages(&events) {
             match event {
                 glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {

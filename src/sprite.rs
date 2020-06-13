@@ -1,18 +1,17 @@
 use crate::gm::{Quad, Rect, Vec2, Vec3, Vertex};
-use crate::texture::TexQuad;
-
-pub struct Atlas {}
+use crate::texture;
 
 #[derive(Clone)]
 pub struct Animation {
-    id: u32,
+    // TODO (etate): Make this a reference
+    atlas: texture::Atlas,
     framerate: f32,
     current_frame: f32,
-    frames: Vec<TexQuad>,
+    frames: Vec<texture::Quad>,
 }
 
 pub enum Show {
-    Tex(TexQuad),
+    Tex(texture::Quad),
     Anim(Animation),
 }
 
@@ -61,7 +60,7 @@ impl Sprite {
         )
     }
 
-    pub fn tex_quad(&self) -> TexQuad {
+    pub fn tex_quad(&self) -> texture::Quad {
         match &self.show {
             Show::Tex(tex) => tex.clone(),
             Show::Anim(anim) => anim.tex_quad(),
@@ -71,10 +70,37 @@ impl Sprite {
     pub fn set_pos(&mut self, pos: Vec3) {
         self.pos = pos;
     }
+
+    pub fn tick(&mut self, delta: f32) {
+        match &mut self.show {
+            Show::Anim(anim) => anim.tick(delta),
+            _ => (),
+        }
+    }
 }
 
 impl Animation {
-    pub fn tex_quad(&self) -> TexQuad {
-        TexQuad::new(Vec2::zero(), Vec2::zero(), Vec2::zero(), Vec2::zero())
+    pub fn new(atlas: &texture::Atlas, framerate: f32, frames: Vec<usize>) -> Animation {
+        Animation {
+            atlas: atlas.clone(),
+            framerate,
+            current_frame: 0.0,
+            frames: frames
+                .iter()
+                .copied()
+                .map(|frame| atlas.get_frame_by_idx(frame))
+                .collect(),
+        }
+    }
+
+    pub fn tex_quad(&self) -> texture::Quad {
+        self.frames[self.current_frame as usize]
+    }
+
+    pub fn tick(&mut self, delta: f32) {
+        self.current_frame += self.framerate * (delta as f32);
+        if self.current_frame > self.frames.len() as f32 {
+            self.current_frame -= self.frames.len() as f32;
+        }
     }
 }
