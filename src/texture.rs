@@ -11,6 +11,14 @@ pub struct Texture {
     pub height: u32,
 }
 
+#[derive(Copy, Clone, Debug)]
+pub struct TexQuad {
+    pub tl: Vec2,
+    pub tr: Vec2,
+    pub bl: Vec2,
+    pub br: Vec2,
+}
+
 impl Texture {
     pub fn load(fname: &str) -> Texture {
         let img = match open(fname) {
@@ -70,5 +78,25 @@ impl Texture {
             src.x / self.width as f32,
             1 as f32 - (src.y / self.height as f32),
         )
+    }
+
+    pub fn tex_quad(&self, x: u32, y: u32, w: u32, h: u32) -> TexQuad {
+        let xx = x as f32;
+        let yy = y as f32;
+        let ww = w as f32;
+        let hh = h as f32;
+
+        TexQuad::new(
+            self.coord(Vec2::new(xx, yy)),
+            self.coord(Vec2::new(xx + ww, yy)),
+            self.coord(Vec2::new(xx, yy + hh)),
+            self.coord(Vec2::new(xx + ww, yy + hh)),
+        )
+    }
+}
+
+impl TexQuad {
+    pub fn new(tl: Vec2, tr: Vec2, bl: Vec2, br: Vec2) -> TexQuad {
+        TexQuad { tl, tr, bl, br }
     }
 }

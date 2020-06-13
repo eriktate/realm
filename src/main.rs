@@ -3,10 +3,12 @@ use glfw::{Action, Context, Key};
 mod gl;
 mod gm;
 mod shader;
+mod sprite;
 mod texture;
 
 use gm::{Vec2, Vec3, Vertex};
-use texture::Texture;
+use sprite::{Show, Sprite};
+use texture::{TexQuad, Texture};
 
 const WIDTH: u32 = 1280;
 const HEIGHT: u32 = 960;
@@ -33,27 +35,18 @@ fn main() {
     // load texture
     let tex = Texture::load("spritesheet.png");
 
+    // make sprite
+    let tex_quad = tex.tex_quad(128, 192, 16, 32);
+    println!("Sprite tex quad: {:?}", tex_quad);
+    let spr = Sprite::new(0, Vec3::new(0.0, 0.0, 0.0), 16, 32, Show::Tex(tex_quad));
+
     // load shaders
     let vert_src = include_str!("../shaders/sprite_vs.glsl");
     let frag_src = include_str!("../shaders/sprite_fs.glsl");
     let shader_program = shader::Shader::new(vert_src, frag_src).unwrap();
     shader_program.set_u32("tex", gl::Textures::Tex0 as u32);
 
-    let quads = vec![gm::Quad::new(
-        gm::Vertex::new(Vec3::new(0.0, 0.0, 0.0), tex.coord(Vec2::new(128.0, 192.0))),
-        gm::Vertex::new(
-            Vec3::new(16.0, 0.0, 0.0),
-            tex.coord(Vec2::new(144.0, 192.0)),
-        ),
-        gm::Vertex::new(
-            Vec3::new(0.0, 32.0, 0.0),
-            tex.coord(Vec2::new(128.0, 224.0)),
-        ),
-        gm::Vertex::new(
-            Vec3::new(16.0, 32.0, 0.0),
-            tex.coord(Vec2::new(144.0, 224.0)),
-        ),
-    )];
+    let quads = vec![spr.to_quad()];
 
     let indices = gm::make_indices(&quads);
     println!("{:?}", indices);
@@ -86,15 +79,6 @@ fn main() {
     let projection = gm::Mat4::ortho(0.0, (WIDTH / 2) as f32, 0.0, (HEIGHT / 2) as f32, 1.0, -1.0);
     shader_program.set_mat4("transform", projection);
     while !window.should_close() {
-        gl::clear_color(0.5, 0.8, 0.5, 1.0);
-        gl::clear(gl::BufferBit::Color as u32);
-        shader_program.use_program();
-        gl::active_texture(0);
-        gl::bind_texture(gl::TextureType::Tex2D, tex.id);
-        gl::bind_vao(vao);
-        gl::draw_elements(gl::DrawMode::Triangles, &indices);
-        window.swap_buffers();
-
         glfw.poll_events();
         for (_, event) in glfw::flush_messages(&events) {
             match event {
@@ -104,5 +88,14 @@ fn main() {
                 _ => {}
             }
         }
+
+        gl::clear_color(0.5, 0.8, 0.5, 1.0);
+        gl::clear(gl::BufferBit::Color as u32);
+        shader_program.use_program();
+        gl::active_texture(0);
+        gl::bind_texture(gl::TextureType::Tex2D, tex.id);
+        gl::bind_vao(vao);
+        gl::draw_elements(gl::DrawMode::Triangles, &indices);
+        window.swap_buffers();
     }
 }

@@ -1,14 +1,17 @@
+#[derive(Copy, Clone, Debug)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32,
 }
 
+#[derive(Copy, Clone, Debug)]
 pub struct Vec3 {
     pub x: f32,
     pub y: f32,
     pub z: f32,
 }
 
+#[derive(Copy, Clone, Debug)]
 pub struct Vec4 {
     pub x: f32,
     pub y: f32,
@@ -17,21 +20,25 @@ pub struct Vec4 {
 }
 
 // Mat4 is stored in column major format.
+#[derive(Copy, Clone)]
 pub struct Mat4 {
     pub data: [f32; 16],
 }
 
+#[derive(Copy, Clone)]
 pub struct Rect {
-    pub pos: Vec2,
+    pub pos: Vec3,
     pub w: f32,
     pub h: f32,
 }
 
+#[derive(Copy, Clone)]
 pub struct Vertex {
     pub pos: Vec3,
     pub tex_coord: Vec2,
 }
 
+#[derive(Copy, Clone)]
 pub struct Quad {
     pub tl: Vertex,
     pub tr: Vertex,
@@ -179,12 +186,12 @@ impl std::ops::Mul for Mat4 {
 }
 
 impl Rect {
-    pub fn new(pos: Vec2, w: f32, h: f32) -> Rect {
+    pub fn new(pos: Vec3, w: f32, h: f32) -> Rect {
         Rect { pos, w, h }
     }
 
-    pub fn from_parts(x: f32, y: f32, w: f32, h: f32) -> Rect {
-        Rect::new(Vec2::new(x, y), w, h)
+    pub fn from_parts(x: f32, y: f32, z: f32, w: f32, h: f32) -> Rect {
+        Rect::new(Vec3::new(x, y, z), w, h)
     }
 
     fn overlaps(&self, other: &Rect) -> bool {
@@ -207,12 +214,6 @@ pub fn make_indices(quads: &Vec<Quad>) -> Vec<u32> {
         let bl = i * 4 + 2;
         let br = i * 4 + 3;
 
-        // indices[i * 6] = tl as u32;
-        // indices[i * 6 + 1] = tr as u32;
-        // indices[i * 6 + 2] = bl as u32;
-        // indices[i * 6 + 3] = tr as u32;
-        // indices[i * 6 + 4] = bl as u32;
-        // indices[i * 6 + 5] = br as u32;
         indices.push(tl as u32);
         indices.push(tr as u32);
         indices.push(bl as u32);
@@ -256,6 +257,6 @@ impl From<&Vec3> for Vec4 {
     }
 }
 
-fn f32_eq(lhs: f32, rhs: f32) -> bool {
+pub fn f32_eq(lhs: f32, rhs: f32) -> bool {
     (lhs - rhs) < 0.0000001
 }
