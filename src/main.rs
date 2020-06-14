@@ -2,16 +2,55 @@ use glfw::{Action, Context, Key};
 
 mod gl;
 mod gm;
+mod input;
 mod shader;
 mod sprite;
 mod texture;
 
 use gm::{Vec2, Vec3, Vertex};
+use input::Controller;
 use sprite::{Show, Sprite};
 use texture::Texture;
 
 const WIDTH: u32 = 1280;
 const HEIGHT: u32 = 960;
+
+fn process_input(window: &mut glfw::Window, ctrl: &mut Controller) {
+    // process polled events
+    // for (_, event) in glfw::flush_messages(&events) {
+    //     match event {
+    //         glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
+    //             window.set_should_close(true)
+    //         }
+    //         _ => {}
+    //     }
+    // }
+
+    // clear inputs before processing new state
+    ctrl.clear();
+    if window.get_key(glfw::Key::Escape) == glfw::Action::Press {
+        window.set_should_close(true);
+    }
+
+    if window.get_key(glfw::Key::W) == glfw::Action::Press {
+        ctrl.press(input::KeyInput::Up);
+    }
+
+    if window.get_key(glfw::Key::S) == glfw::Action::Press {
+        ctrl.press(input::KeyInput::Down);
+    }
+
+    if window.get_key(glfw::Key::A) == glfw::Action::Press {
+        ctrl.press(input::KeyInput::Left);
+    }
+
+    if window.get_key(glfw::Key::D) == glfw::Action::Press {
+        ctrl.press(input::KeyInput::Right);
+    }
+
+    // lock in new inputs and determine key states
+    ctrl.lock_in();
+}
 
 fn main() {
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
@@ -35,7 +74,7 @@ fn main() {
     // do texture things
     let tex = Texture::load("spritesheet.png");
     let atlas = texture::Atlas::new(tex, 128, 192, 16, 32, 0, 0, 1, 4);
-    let anim = sprite::Animation::new(&atlas, 4.0, vec![0, 1, 2, 3]);
+    let anim = sprite::Animation::new(&atlas, 8.0, vec![0, 1, 2, 3]);
 
     // make sprite
     let tex_quad = tex.tex_quad(128, 192, 16, 32);
@@ -80,24 +119,20 @@ fn main() {
     let projection = gm::Mat4::ortho(0.0, (WIDTH / 2) as f32, 0.0, (HEIGHT / 2) as f32, 1.0, -1.0);
     shader_program.set_mat4("transform", projection);
     let mut time_last_frame = glfw.get_time() as f32;
+    let mut ctrl = input::Controller::new();
     while !window.should_close() {
         glfw.poll_events();
+        process_input(&mut window, &mut ctrl);
         let current_time = glfw.get_time() as f32;
         let elapsed_time = current_time - time_last_frame;
         time_last_frame = current_time;
 
+        let move_vec = ctrl.move_vec();
         spr.tick(elapsed_time);
+        spr.set_pos(spr.pos + move_vec);
         quads[0] = spr.to_quad();
 
         gl::update_vbo(vbo, &quads);
-        for (_, event) in glfw::flush_messages(&events) {
-            match event {
-                glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
-                    window.set_should_close(true)
-                }
-                _ => {}
-            }
-        }
 
         gl::clear_color(0.5, 0.8, 0.5, 1.0);
         gl::clear(gl::BufferBit::Color as u32);

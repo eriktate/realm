@@ -2,29 +2,29 @@ use crate::gm::{Quad, Rect, Vec2, Vec3, Vertex};
 use crate::texture;
 
 #[derive(Clone)]
-pub struct Animation {
+pub struct Animation<'a> {
     // TODO (etate): Make this a reference
-    atlas: texture::Atlas,
+    atlas: &'a texture::Atlas,
     framerate: f32,
     current_frame: f32,
     frames: Vec<texture::Quad>,
 }
 
-pub enum Show {
+pub enum Show<'a> {
     Tex(texture::Quad),
-    Anim(Animation),
+    Anim(Animation<'a>),
 }
 
-pub struct Sprite {
-    id: u32,
-    pos: Vec3,
-    width: u32,
-    height: u32,
-    hitbox: Rect,
-    show: Show,
+pub struct Sprite<'a> {
+    pub id: u32,
+    pub pos: Vec3,
+    pub width: u32,
+    pub height: u32,
+    pub hitbox: Rect,
+    pub show: Show<'a>,
 }
 
-impl Sprite {
+impl<'a> Sprite<'a> {
     pub fn new(id: u32, pos: Vec3, width: u32, height: u32, show: Show) -> Sprite {
         Sprite {
             id,
@@ -79,10 +79,10 @@ impl Sprite {
     }
 }
 
-impl Animation {
+impl<'a> Animation<'a> {
     pub fn new(atlas: &texture::Atlas, framerate: f32, frames: Vec<usize>) -> Animation {
         Animation {
-            atlas: atlas.clone(),
+            atlas: atlas,
             framerate,
             current_frame: 0.0,
             frames: frames

@@ -1,14 +1,18 @@
-use crate::gm::{f32_eq, Vec2};
+use crate::gm::{f32_eq, Vec2, Vec3};
 
-pub enum State {
+#[repr(usize)]
+#[derive(Copy, Clone)]
+pub enum KeyState {
     Pressed,
     Released,
     Down,
     Up,
+    End,
 }
 
 #[repr(usize)]
-pub enum Input {
+#[derive(Copy, Clone)]
+pub enum KeyInput {
     Left,
     Right,
     Up,
@@ -17,38 +21,61 @@ pub enum Input {
 }
 
 pub struct Controller {
-    pub pos: Vec2,
-    pub inputs: [State; Input::End as usize],
+    values: [f32; KeyInput::End as usize],
+    states: [KeyState; KeyInput::End as usize],
 }
 
 impl Controller {
-    pub fn press(&mut self, input: Input) {
-        self.inputs[input as usize] = State::Pressed;
+    pub fn new() -> Controller {
+        Controller {
+            values: [0.0; KeyInput::End as usize],
+            states: [KeyState::Up; KeyInput::End as usize],
+        }
+    }
+    pub fn press(&mut self, input: KeyInput) {
+        self.values[input as usize] = 1.0;
     }
 
-    pub fn release(&mut self, input: Input) {
-        self.inputs[input as usize] = State::Released;
+    pub fn release(&mut self, input: KeyInput) {
+        self.values[input as usize] = 0.0;
     }
 
     pub fn clear(&mut self) {
-        for i in 0..self.inputs.len() {
-            self.inputs[i] = State::Up;
+        for i in 0..self.values.len() {
+            self.values[i] = 0.0;
         }
     }
 
     pub fn lock_in(&mut self) {
-        for i in 0..self.inputs.len() {
-            self.inputs[i] = if f32_eq(self.inputs[i], 0.0) {
-                match self.inputs[i] {
-                    State::Pressed | State::Down => State::Released,
-                    _ => State::Up,
+        for i in 0..self.values.len() {
+            self.states[i] = if f32_eq(self.values[i], 0.0) {
+                match self.states[i] {
+                    KeyState::Pressed | KeyState::Down => KeyState::Released,
+                    _ => KeyState::Up,
                 }
             } else {
-                match self.inputs[i] {
-                    State::Released | State::Up => State::Pressed,
-                    _ => State::Down,
+                match self.states[i] {
+                    KeyState::Released | KeyState::Up => KeyState::Pressed,
+                    _ => KeyState::Down,
                 }
             }
         }
+    }
+
+    pub fn key_state(&self, key: KeyInput) -> KeyState {
+        self.states[key as usize]
+    }
+
+    pub fn key_value(&self, key: KeyInput) -> f32 {
+        self.values[key as usize]
+    }
+
+    pub fn move_vec(&self) -> Vec3 {
+        let right = self.key_value(KeyInput::Right);
+        let left = self.key_value(KeyInput::Left);
+        let up = self.key_value(KeyInput::Up);
+        let down = self.key_value(KeyInput::Down);
+
+        Vec3::new(right - left, down - up, 0.0)
     }
 }

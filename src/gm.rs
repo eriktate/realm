@@ -260,3 +260,11 @@ impl From<&Vec3> for Vec4 {
 pub fn f32_eq(lhs: f32, rhs: f32) -> bool {
     (lhs - rhs) < 0.0000001
 }
+
+impl std::ops::Add for Vec3 {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self {
+        Vec3::new(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z)
+    }
+}
