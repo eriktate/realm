@@ -25,7 +25,7 @@ pub struct Mat4 {
     pub data: [f32; 16],
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Rect {
     pub pos: Vec3,
     pub w: f32,
@@ -194,7 +194,7 @@ impl Rect {
         Rect::new(Vec3::new(x, y, z), w, h)
     }
 
-    fn overlaps(&self, other: &Rect) -> bool {
+    pub fn overlaps(&self, other: &Rect) -> bool {
         // flipping arguments captures containment
         overlaps(&self, other) || overlaps(other, &self)
     }

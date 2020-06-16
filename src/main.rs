@@ -3,6 +3,7 @@ use glfw::{Action, Context, Key};
 mod gl;
 mod gm;
 mod input;
+mod scene;
 mod shader;
 mod sprite;
 mod texture;
@@ -16,16 +17,6 @@ const WIDTH: u32 = 1280;
 const HEIGHT: u32 = 960;
 
 fn process_input(window: &mut glfw::Window, ctrl: &mut Controller) {
-    // process polled events
-    // for (_, event) in glfw::flush_messages(&events) {
-    //     match event {
-    //         glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
-    //             window.set_should_close(true)
-    //         }
-    //         _ => {}
-    //     }
-    // }
-
     // clear inputs before processing new state
     ctrl.clear();
     if window.get_key(glfw::Key::Escape) == glfw::Action::Press {
@@ -52,6 +43,46 @@ fn process_input(window: &mut glfw::Window, ctrl: &mut Controller) {
     ctrl.lock_in();
 }
 
+fn box_level(sc: &mut scene::Scene, tex: &texture::Texture) {
+    let floor_tex = tex.tex_quad(16, 64, 16, 16);
+    let wall_tex = tex.tex_quad(32, 0, 16, 32);
+    for i in 0..10 {
+        // face walls
+        let pos = Vec3::new(128.0 + (16 * i) as f32, 96.0, 0.0);
+        sc.new_sprite(
+            pos,
+            16,
+            32,
+            gm::Rect::new(Vec3::new(0.0, 16.0, 0.0), 16.0, 16.0),
+            true,
+            Show::Tex(wall_tex),
+        );
+        for j in 0..10 {
+            // flooring
+            let pos = Vec3::new(128.0 + (16 * i) as f32, 128.0 + (16 * j) as f32, -0.5);
+            sc.new_sprite(
+                pos,
+                16,
+                16,
+                gm::Rect::new(Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0),
+                false,
+                Show::Tex(floor_tex),
+            );
+        }
+
+        // bottom wall
+        let pos = Vec3::new(128.0 + (16 * i) as f32, 224.0, 0.0);
+        sc.new_sprite(
+            pos,
+            16,
+            32,
+            gm::Rect::new(Vec3::new(0.0, 16.0, 0.0), 16.0, 16.0),
+            true,
+            Show::Tex(wall_tex),
+        );
+    }
+}
+
 fn main() {
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
     glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
@@ -76,9 +107,32 @@ fn main() {
     let atlas = texture::Atlas::new(tex, 128, 192, 16, 32, 0, 0, 1, 4);
     let anim = sprite::Animation::new(&atlas, 8.0, vec![0, 1, 2, 3]);
 
+    // make scene
+    let mut sc = scene::Scene::new(100);
+
     // make sprite
-    let tex_quad = tex.tex_quad(128, 192, 16, 32);
-    let mut spr = Sprite::new(0, Vec3::new(0.0, 0.0, 0.0), 16, 32, Show::Anim(anim));
+    box_level(&mut sc, &tex);
+    let wall_tex = tex.tex_quad(288, 288, 16, 32);
+    for i in 0..10 {
+        sc.new_sprite(
+            Vec3::new(128.0 + (16 * i) as f32, 128.0, 0.0),
+            16,
+            32,
+            gm::Rect::new(Vec3::new(0.0, 16.0, 0.0), 16.0, 16.0),
+            true,
+            Show::Tex(wall_tex),
+        );
+    }
+
+    // add player last so everything else renders below
+    let player_id = sc.new_sprite(
+        Vec3::new(0.0, 0.0, 0.0),
+        16,
+        32,
+        gm::Rect::new(Vec3::new(0.0, 16.0, 0.0), 16.0, 16.0),
+        false,
+        Show::Anim(anim),
+    );
 
     // load shaders
     let vert_src = include_str!("../shaders/sprite_vs.glsl");
@@ -86,12 +140,9 @@ fn main() {
     let shader_program = shader::Shader::new(vert_src, frag_src).unwrap();
     shader_program.set_u32("tex", gl::Textures::Tex0 as u32);
 
-    let mut quads = vec![spr.to_quad()];
-
-    let indices = gm::make_indices(&quads);
-    println!("{:?}", indices);
+    let indices = gm::make_indices(&sc.quads());
     let vao = gl::create_vao();
-    let vbo = gl::create_vbo(&quads);
+    let vbo = gl::create_vbo(&sc.quads());
     let ebo = gl::create_ebo(&indices);
 
     gl::bind_vao(vao); // start recording vao
@@ -120,6 +171,9 @@ fn main() {
     shader_program.set_mat4("transform", projection);
     let mut time_last_frame = glfw.get_time() as f32;
     let mut ctrl = input::Controller::new();
+
+    println!("sprite_index: {:?}", sc.sprite_index);
+
     while !window.should_close() {
         glfw.poll_events();
         process_input(&mut window, &mut ctrl);
@@ -127,12 +181,31 @@ fn main() {
         let elapsed_time = current_time - time_last_frame;
         time_last_frame = current_time;
 
-        let move_vec = ctrl.move_vec();
-        spr.tick(elapsed_time);
-        spr.set_pos(spr.pos + move_vec);
-        quads[0] = spr.to_quad();
+        let initial_move = ctrl.move_vec();
+        let mut move_vec = initial_move;
+        for spr in sc.sprites() {
+            if spr.id == player_id || !spr.solid {
+                continue;
+            }
+            let player = sc.get_sprite(player_id);
+            let other = spr.hitbox();
+            if player.will_overlap(move_vec, &other) {
+                move_vec.x = 0.0;
+                if player.will_overlap(move_vec, &other) {
+                    move_vec = initial_move;
+                    move_vec.y = 0.0;
+                    if player.will_overlap(move_vec, &other) {
+                        move_vec = Vec3::zero();
+                    }
+                }
+            }
+        }
 
-        gl::update_vbo(vbo, &quads);
+        sc.move_sprite(player_id, move_vec);
+
+        sc.tick(elapsed_time);
+
+        gl::update_vbo(vbo, &sc.quads());
 
         gl::clear_color(0.5, 0.8, 0.5, 1.0);
         gl::clear(gl::BufferBit::Color as u32);
@@ -143,4 +216,8 @@ fn main() {
         gl::draw_elements(gl::DrawMode::Triangles, &indices);
         window.swap_buffers();
     }
+
+    // println!("final  order: {:?}", sc.sprite_index);
+    // let positions: Vec<Vec3> = sc.sprites().iter().map(|spr| spr.pos).collect();
+    // println!("final  positions: {:?}", positions);
 }

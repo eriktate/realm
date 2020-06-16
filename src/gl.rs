@@ -19,6 +19,7 @@ pub enum DrawMode {
 #[repr(u32)]
 pub enum BufferBit {
     Color = gl::COLOR_BUFFER_BIT,
+    Depth = gl::DEPTH_BUFFER_BIT,
 }
 
 #[repr(u32)]
@@ -66,6 +67,7 @@ pub enum Textures {
 #[repr(u32)]
 pub enum Capability {
     Blend = gl::BLEND,
+    DepthTest = gl::DEPTH_TEST,
 }
 
 #[repr(u32)]

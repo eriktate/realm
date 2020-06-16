@@ -1,7 +1,7 @@
 use crate::gm::{Quad, Rect, Vec2, Vec3, Vertex};
 use crate::texture;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Animation<'a> {
     // TODO (etate): Make this a reference
     atlas: &'a texture::Atlas,
@@ -10,28 +10,40 @@ pub struct Animation<'a> {
     frames: Vec<texture::Quad>,
 }
 
+#[derive(Clone, Debug)]
 pub enum Show<'a> {
     Tex(texture::Quad),
     Anim(Animation<'a>),
 }
 
+#[derive(Clone, Debug)]
 pub struct Sprite<'a> {
     pub id: u32,
     pub pos: Vec3,
     pub width: u32,
     pub height: u32,
-    pub hitbox: Rect,
     pub show: Show<'a>,
+    pub solid: bool,
+    hb: Rect,
 }
 
 impl<'a> Sprite<'a> {
-    pub fn new(id: u32, pos: Vec3, width: u32, height: u32, show: Show) -> Sprite {
+    pub fn new(
+        id: u32,
+        pos: Vec3,
+        width: u32,
+        height: u32,
+        hb: Rect,
+        solid: bool,
+        show: Show,
+    ) -> Sprite {
         Sprite {
             id,
             pos,
             width,
             height,
-            hitbox: Rect::new(pos, width as f32, height as f32),
+            hb,
+            solid,
             show,
         }
     }
@@ -76,6 +88,16 @@ impl<'a> Sprite<'a> {
             Show::Anim(anim) => anim.tick(delta),
             _ => (),
         }
+    }
+
+    pub fn hitbox(&self) -> Rect {
+        Rect::new(self.pos + self.hb.pos, self.hb.w, self.hb.h)
+    }
+
+    pub fn will_overlap(&self, move_vec: Vec3, hb: &Rect) -> bool {
+        let future_hb = Rect::new(self.pos + move_vec + self.hb.pos, self.hb.w, self.hb.h);
+
+        future_hb.overlaps(hb)
     }
 }
 

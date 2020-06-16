@@ -20,7 +20,7 @@ pub struct Quad {
     pub br: Vec2,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Atlas {
     tex: Texture,
     offset_x: u32,
