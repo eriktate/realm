@@ -20,8 +20,6 @@ const HEIGHT: u32 = 960;
 fn process_input(window: &mut glfw::Window, ctrl: &mut Controller) {
     // clear inputs before processing new state
     ctrl.clear();
-    println!("W: {:?}", window.get_key(glfw::Key::W));
-    println!("D: {:?}", window.get_key(glfw::Key::D));
     if window.get_key(glfw::Key::Escape) == glfw::Action::Press {
         window.set_should_close(true);
     }
@@ -175,6 +173,7 @@ fn main() {
     let mut ctrl = input::Controller::new();
 
     while !window.should_close() {
+        window.swap_buffers();
         glfw.poll_events();
         process_input(&mut window, &mut ctrl);
         let current_time = glfw.get_time() as f32;
@@ -217,6 +216,5 @@ fn main() {
         gl::bind_texture(gl::TextureType::Tex2D, tex.id);
         gl::bind_vao(vao);
         gl::draw_elements(gl::DrawMode::Triangles, &indices);
-        window.swap_buffers();
     }
 }
