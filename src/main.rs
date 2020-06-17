@@ -1,5 +1,6 @@
 use glfw::{Action, Context, Key};
 
+mod camera;
 mod gl;
 mod gm;
 mod input;
@@ -8,9 +9,9 @@ mod shader;
 mod sprite;
 mod texture;
 
-use gm::{Vec2, Vec3, Vertex};
+use gm::{Vec3, Vertex};
 use input::Controller;
-use sprite::{Show, Sprite};
+use sprite::Show;
 use texture::Texture;
 
 const WIDTH: u32 = 1280;
@@ -19,6 +20,8 @@ const HEIGHT: u32 = 960;
 fn process_input(window: &mut glfw::Window, ctrl: &mut Controller) {
     // clear inputs before processing new state
     ctrl.clear();
+    println!("W: {:?}", window.get_key(glfw::Key::W));
+    println!("D: {:?}", window.get_key(glfw::Key::D));
     if window.get_key(glfw::Key::Escape) == glfw::Action::Press {
         window.set_should_close(true);
     }
@@ -167,21 +170,19 @@ fn main() {
     gl::enable(gl::Capability::Blend);
     gl::blend_func(gl::BlendFactor::SrcAlpha, gl::BlendFactor::OneMinusSrcAlpha);
 
-    let projection = gm::Mat4::ortho(0.0, (WIDTH / 2) as f32, 0.0, (HEIGHT / 2) as f32, 1.0, -1.0);
-    shader_program.set_mat4("transform", projection);
+    let mut cam = camera::Camera::new(0.0, 0.0, WIDTH / 2, HEIGHT / 2, WIDTH / 4, HEIGHT / 4);
     let mut time_last_frame = glfw.get_time() as f32;
     let mut ctrl = input::Controller::new();
-
-    println!("sprite_index: {:?}", sc.sprite_index);
 
     while !window.should_close() {
         glfw.poll_events();
         process_input(&mut window, &mut ctrl);
         let current_time = glfw.get_time() as f32;
-        let elapsed_time = current_time - time_last_frame;
+        let delta = current_time - time_last_frame;
         time_last_frame = current_time;
 
-        let initial_move = ctrl.move_vec();
+        let speed = 50.0;
+        let initial_move = ctrl.move_vec() * speed * delta;
         let mut move_vec = initial_move;
         for spr in sc.sprites() {
             if spr.id == player_id || !spr.solid {
@@ -203,8 +204,10 @@ fn main() {
 
         sc.move_sprite(player_id, move_vec);
 
-        sc.tick(elapsed_time);
+        sc.tick(delta);
 
+        cam.look_at(sc.get_sprite(player_id).pos);
+        shader_program.set_mat4("transform", cam.transform());
         gl::update_vbo(vbo, &sc.quads());
 
         gl::clear_color(0.5, 0.8, 0.5, 1.0);
@@ -216,8 +219,4 @@ fn main() {
         gl::draw_elements(gl::DrawMode::Triangles, &indices);
         window.swap_buffers();
     }
-
-    // println!("final  order: {:?}", sc.sprite_index);
-    // let positions: Vec<Vec3> = sc.sprites().iter().map(|spr| spr.pos).collect();
-    // println!("final  positions: {:?}", positions);
 }

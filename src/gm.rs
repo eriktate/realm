@@ -268,3 +268,11 @@ impl std::ops::Add for Vec3 {
         Vec3::new(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z)
     }
 }
+
+impl std::ops::Mul<f32> for Vec3 {
+    type Output = Self;
+
+    fn mul(self, scalar: f32) -> Self {
+        Vec3::new(self.x * scalar, self.y * scalar, self.z * scalar)
+    }
+}
