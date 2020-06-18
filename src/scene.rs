@@ -1,14 +1,14 @@
 use crate::gm::{Quad, Rect, Vec2, Vec3};
 use crate::sprite::{Show, Sprite};
 
-pub struct Scene<'a> {
+pub struct Scene {
     quads: Vec<Quad>,
-    sprites: Vec<Sprite<'a>>,
+    sprites: Vec<Sprite>,
     pub sprite_index: Vec<usize>,
 }
 
-impl<'a> Scene<'a> {
-    pub fn new(count: usize) -> Scene<'a> {
+impl Scene {
+    pub fn new(count: usize) -> Scene {
         Scene {
             quads: Vec::with_capacity(count),
             sprites: Vec::with_capacity(count),
@@ -23,7 +23,7 @@ impl<'a> Scene<'a> {
         height: u32,
         hb: Rect,
         solid: bool,
-        show: Show<'a>,
+        show: Show,
     ) -> u32 {
         let id = self.sprite_index.len() as u32;
         let spr = Sprite::new(id, pos, width, height, hb, solid, show);

@@ -2,32 +2,30 @@ use crate::gm::{Quad, Rect, Vec2, Vec3, Vertex};
 use crate::texture;
 
 #[derive(Clone, Debug)]
-pub struct Animation<'a> {
-    // TODO (etate): Make this a reference
-    atlas: &'a texture::Atlas,
+pub struct Animation {
     framerate: f32,
     current_frame: f32,
     frames: Vec<texture::Quad>,
 }
 
 #[derive(Clone, Debug)]
-pub enum Show<'a> {
+pub enum Show {
     Tex(texture::Quad),
-    Anim(Animation<'a>),
+    Anim(Animation),
 }
 
 #[derive(Clone, Debug)]
-pub struct Sprite<'a> {
+pub struct Sprite {
     pub id: u32,
     pub pos: Vec3,
     pub width: u32,
     pub height: u32,
-    pub show: Show<'a>,
+    pub show: Show,
     pub solid: bool,
     hb: Rect,
 }
 
-impl<'a> Sprite<'a> {
+impl Sprite {
     pub fn new(
         id: u32,
         pos: Vec3,
@@ -101,10 +99,9 @@ impl<'a> Sprite<'a> {
     }
 }
 
-impl<'a> Animation<'a> {
+impl Animation {
     pub fn new(atlas: &texture::Atlas, framerate: f32, frames: Vec<usize>) -> Animation {
         Animation {
-            atlas: atlas,
             framerate,
             current_frame: 0.0,
             frames: frames
