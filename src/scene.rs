@@ -39,6 +39,11 @@ impl Scene {
         &self.sprites[idx]
     }
 
+    pub fn get_mut_sprite(&mut self, id: u32) -> &mut Sprite {
+        let idx = self.sprite_index[id as usize];
+        &mut self.sprites[idx]
+    }
+
     pub fn move_sprite(&mut self, id: u32, move_vec: Vec3) {
         self.set_sprite_pos(id, self.get_sprite(id).pos + move_vec)
     }

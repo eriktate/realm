@@ -52,6 +52,11 @@ impl Camera {
         }
     }
 
+    pub fn center_on(&mut self, pos: Vec3) {
+        self.pos.x = pos.x - (self.width / 2) as f32;
+        self.pos.y = pos.y - (self.height / 2) as f32;
+    }
+
     pub fn transform(&self) -> Mat4 {
         let translation = Mat4::translation(Vec3::new(
             (self.width / 2) as f32 - self.pos.x,

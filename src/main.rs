@@ -44,7 +44,7 @@ fn process_input(window: &mut glfw::Window, ctrl: &mut Controller) {
     ctrl.lock_in();
 }
 
-fn box_level(sc: &mut scene::Scene, tex: &texture::Texture) {
+fn simple_level(sc: &mut scene::Scene, tex: &texture::Texture) {
     let floor_tex = tex.tex_quad(16, 64, 16, 16);
     let wall_tex = tex.tex_quad(32, 0, 16, 32);
     for i in 0..10 {
@@ -54,7 +54,7 @@ fn box_level(sc: &mut scene::Scene, tex: &texture::Texture) {
             pos,
             16,
             32,
-            gm::Rect::new(Vec3::new(0.0, 16.0, 0.0), 16.0, 16.0),
+            gm::Rect::new(Vec3::new(0.0, 24.0, 0.0), 16.0, 8.0),
             true,
             Show::Tex(wall_tex),
         );
@@ -72,12 +72,12 @@ fn box_level(sc: &mut scene::Scene, tex: &texture::Texture) {
         }
 
         // bottom wall
-        let pos = Vec3::new(128.0 + (16 * i) as f32, 224.0, 0.0);
+        let pos = Vec3::new(128.0 + (16 * i) as f32, 256.0, 0.0);
         sc.new_sprite(
             pos,
             16,
             32,
-            gm::Rect::new(Vec3::new(0.0, 16.0, 0.0), 16.0, 16.0),
+            gm::Rect::new(Vec3::new(0.0, 24.0, 0.0), 16.0, 8.0),
             true,
             Show::Tex(wall_tex),
         );
@@ -105,18 +105,19 @@ fn main() {
 
     // do texture things
     let tex = Texture::load("spritesheet.png");
-    let atlas = texture::Atlas::new(tex, 128, 192, 16, 32, 0, 0, 1, 4);
-    let anim = sprite::Animation::new(&atlas, 8.0, vec![0, 1, 2, 3]);
+    let atlas = texture::Atlas::new(tex, 128, 192, 16, 32, 0, 0, 1, 8);
+    let stand_anim = sprite::Animation::new(&atlas, 8.0, vec![0, 1, 2, 3]);
+    let walk_anim = sprite::Animation::new(&atlas, 8.0, vec![4, 5, 6, 7]);
 
     // make scene
     let mut sc = scene::Scene::new(100);
 
     // make sprite
-    box_level(&mut sc, &tex);
+    simple_level(&mut sc, &tex);
     let wall_tex = tex.tex_quad(288, 288, 16, 32);
-    for i in 0..10 {
+    for i in 0..8 {
         sc.new_sprite(
-            Vec3::new(128.0 + (16 * i) as f32, 128.0, 0.0),
+            Vec3::new(144.0 + (16 * i) as f32, 160.0, 0.0),
             16,
             32,
             gm::Rect::new(Vec3::new(0.0, 16.0, 0.0), 16.0, 16.0),
@@ -127,12 +128,12 @@ fn main() {
 
     // add player last so everything else renders below
     let player_id = sc.new_sprite(
-        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(144.0, 128.0, 0.0),
         16,
         32,
-        gm::Rect::new(Vec3::new(0.0, 16.0, 0.0), 16.0, 16.0),
+        gm::Rect::new(Vec3::new(0.0, 24.0, 0.0), 16.0, 8.0),
         false,
-        Show::Anim(anim),
+        Show::Anim(stand_anim.clone()),
     );
 
     // load shaders
@@ -168,9 +169,12 @@ fn main() {
     gl::enable(gl::Capability::Blend);
     gl::blend_func(gl::BlendFactor::SrcAlpha, gl::BlendFactor::OneMinusSrcAlpha);
 
-    let mut cam = camera::Camera::new(0.0, 0.0, WIDTH / 2, HEIGHT / 2, WIDTH / 4, HEIGHT / 4);
+    let mut cam = camera::Camera::new(0.0, 0.0, WIDTH / 2, HEIGHT / 2, WIDTH / 12, HEIGHT / 12);
     let mut time_last_frame = glfw.get_time() as f32;
     let mut ctrl = input::Controller::new();
+    cam.center_on(sc.get_sprite(player_id).pos);
+
+    let mut moving = false;
 
     while !window.should_close() {
         window.swap_buffers();
@@ -180,8 +184,8 @@ fn main() {
         let delta = current_time - time_last_frame;
         time_last_frame = current_time;
 
-        let speed = 50.0;
-        let initial_move = ctrl.move_vec() * speed * delta;
+        let speed = 75.0;
+        let initial_move = ctrl.move_vec().unit() * speed * delta;
         let mut move_vec = initial_move;
         for spr in sc.sprites() {
             if spr.id == player_id || !spr.solid {
@@ -198,6 +202,20 @@ fn main() {
                         move_vec = Vec3::zero();
                     }
                 }
+            }
+        }
+
+        if !moving {
+            if !gm::f32_eq(move_vec.mag(), 0.0) {
+                moving = true;
+                sc.get_mut_sprite(player_id)
+                    .show(Show::Anim(walk_anim.clone()));
+            }
+        } else {
+            if gm::f32_eq(move_vec.mag(), 0.0) {
+                moving = false;
+                sc.get_mut_sprite(player_id)
+                    .show(Show::Anim(stand_anim.clone()));
             }
         }
 

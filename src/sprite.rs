@@ -97,6 +97,10 @@ impl Sprite {
 
         future_hb.overlaps(hb)
     }
+
+    pub fn show(&mut self, show: Show) {
+        self.show = show
+    }
 }
 
 impl Animation {
