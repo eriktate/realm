@@ -22,6 +22,7 @@ pub struct Sprite {
     pub height: u32,
     pub show: Show,
     pub solid: bool,
+    pub flip: bool,
     hb: Rect,
 }
 
@@ -42,12 +43,21 @@ impl Sprite {
             height,
             hb,
             solid,
+            flip: false,
             show,
         }
     }
 
     pub fn to_quad(&self) -> Quad {
-        let tex_quad = self.tex_quad();
+        let mut tex_quad = self.tex_quad();
+        if self.flip {
+            let tl = tex_quad.tl;
+            let bl = tex_quad.bl;
+            tex_quad.tl = tex_quad.tr;
+            tex_quad.tr = tl;
+            tex_quad.bl = tex_quad.br;
+            tex_quad.br = bl;
+        }
 
         Quad::new(
             Vertex::new(self.pos, tex_quad.tl),

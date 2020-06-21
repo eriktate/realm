@@ -205,17 +205,26 @@ fn main() {
             }
         }
 
-        if !moving {
-            if !gm::f32_eq(move_vec.mag(), 0.0) {
-                moving = true;
-                sc.get_mut_sprite(player_id)
-                    .show(Show::Anim(walk_anim.clone()));
+        {
+            let player = sc.get_mut_sprite(player_id);
+            if move_vec.x > 0.0 {
+                player.flip = false;
             }
-        } else {
-            if gm::f32_eq(move_vec.mag(), 0.0) {
-                moving = false;
-                sc.get_mut_sprite(player_id)
-                    .show(Show::Anim(stand_anim.clone()));
+
+            if move_vec.x < 0.0 {
+                player.flip = true;
+            }
+
+            if !moving {
+                if !gm::f32_eq(move_vec.mag(), 0.0) {
+                    moving = true;
+                    player.show(Show::Anim(walk_anim.clone()));
+                }
+            } else {
+                if gm::f32_eq(move_vec.mag(), 0.0) {
+                    moving = false;
+                    player.show(Show::Anim(stand_anim.clone()));
+                }
             }
         }
 
