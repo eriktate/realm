@@ -274,6 +274,7 @@ pub fn f32_eq(lhs: f32, rhs: f32) -> bool {
     (lhs - rhs) < 0.0000001
 }
 
+// vector addition
 impl std::ops::Add for Vec3 {
     type Output = Self;
 
@@ -282,6 +283,24 @@ impl std::ops::Add for Vec3 {
     }
 }
 
+impl std::ops::Add for Vec2 {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self {
+        Vec2::new(self.x + rhs.x, self.y + rhs.y)
+    }
+}
+
+// dot product
+impl std::ops::Mul for Vec3 {
+    type Output = f32;
+
+    fn mul(self, rhs: Self) -> f32 {
+        self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
+    }
+}
+
+// vector scaling
 impl std::ops::Mul<f32> for Vec3 {
     type Output = Self;
 

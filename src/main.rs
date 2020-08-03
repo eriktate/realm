@@ -1,9 +1,12 @@
 use glfw::{Action, Context, Key};
+use image;
+// use noise::{NoiseFn, Perlin};
 
 mod camera;
 mod gl;
 mod gm;
 mod input;
+mod noise;
 mod scene;
 mod shader;
 mod sprite;
@@ -43,6 +46,24 @@ fn process_input(window: &mut glfw::Window, ctrl: &mut Controller) {
     // lock in new inputs and determine key states
     ctrl.lock_in();
 }
+
+// fn make_noise(width: u32, height: u32) {
+//     let mut img = image::GrayImage::new(width, height);
+//     let perlin = Perlin::new();
+//     for x in 0..width {
+//         for y in 0..height {
+//             let n = perlin.get([
+//                 x as f64 / width as f64 - 0.5,
+//                 y as f64 / height as f64 - 0.5,
+//             ]);
+//             let val = ((n * 0.5 + 0.5) * 255.0) as u8;
+//             img.put_pixel(x, y, image::Luma([val]));
+//         }
+//     }
+
+//     let dyn_img = image::DynamicImage::ImageLuma8(img);
+//     dyn_img.save("noise.png").unwrap();
+// }
 
 fn simple_level(sc: &mut scene::Scene, tex: &texture::Texture) {
     let floor_tex = tex.tex_quad(16, 64, 16, 16);
@@ -85,6 +106,7 @@ fn simple_level(sc: &mut scene::Scene, tex: &texture::Texture) {
 }
 
 fn main() {
+    // make_noise(2048, 2048);
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
     glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
 
